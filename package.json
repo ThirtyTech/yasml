@@ -18,7 +18,8 @@
   "type": "module",
   "author": {
     "name": "Jonathan Sheely",
-    "email": "jsheely@thirtytech.net"
+    "email": "jsheely@thirtytech.net",
+    "url": "https://github.com/thirtytech"
   },
   "scripts": {
     "dev": "vite",

@@ -11,7 +11,7 @@ function App() {
         <a href="https://vitejs.dev" target="_blank">
           <img src="/vite.svg" className="logo" alt="Vite logo" />
         </a>
-        <a href="https://github.com/@thirtytech/yasml" target="_blank">
+        <a href="https://github.com/thirtytech/yasml" target="_blank">
           <img src="/yasml.png" className="logo" alt="Yasml logo" />
         </a>
         <a href="https://reactjs.org" target="_blank">

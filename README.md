@@ -176,7 +176,7 @@ function Count() {
 
 ## Contributing
 
-If you find a bug, please [create an issue](https://github.com/@thirtytech/yasml/issues/new) providing instructions to reproduce it. It's always very appreciable if you find the time to fix it. In this case, please [submit a PR](https://github.com/@thirtytech/yasml/pulls).
+If you find a bug, please [create an issue](https://github.com/thirtytech/yasml/issues/new) providing instructions to reproduce it. It's always very appreciable if you find the time to fix it. In this case, please [submit a PR](https://github.com/thirtytech/yasml/pulls).
 
 If you're a beginner, it'll be a pleasure to help you contribute. You can start by reading [the beginner's guide to contributing to a GitHub project](https://akrabat.com/the-beginners-guide-to-contributing-to-a-github-project/).
 
@@ -184,4 +184,4 @@ When working on this codebase, please use `pnpm`. Run `pnpm examples` to run exa
 
 ## License
 
-MIT © [Jonathan Sheely](https://github.com/@thirtytech)
+MIT © [Jonathan Sheely](https://github.com/thirtytech)
