@@ -20,6 +20,9 @@
     "email": "jsheely@thirtytech.net",
     "url": "https://github.com/thirtytech"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
