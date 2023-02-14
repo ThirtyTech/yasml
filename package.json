@@ -1,5 +1,5 @@
 {
-  "name": "yasml",
+  "name": "@thirtytech/yasml",
   "description": "Yet another react state management library. Easy to work with and feels like regular hooks.",
   "version": "1.0.0",
   "files": [

@@ -35,7 +35,7 @@ Library is fully type safe with go to definition and find all references end to 
 
 ```jsx
 import React, { useState } from "react";
-import yasml from "yasml";
+import yasml from "@thirtytech/yasml";
 
 // 1️⃣ Create a custom function/hook as usual to store your state
 function CounterState() {
@@ -76,7 +76,7 @@ function App() {
 
 ```jsx
 import React, { useState, useCallback } from "react";
-import yasml from "yasml";
+import yasml from "@thirtytech/yasml";
 
 // 1️⃣ Create a custom hook that receives props
 function CounterState({ initialCount = 0 }) {
@@ -117,13 +117,13 @@ function App() {
 npm:
 
 ```sh
-npm i yasml
+npm i @thirtytech/yasml
 ```
 
 Yarn:
 
 ```sh
-pnpm add yasml
+pnpm add @thirtytech/yasml
 ```
 
 ## API
@@ -138,7 +138,7 @@ It's any [custom hook](https://reactjs.org/docs/hooks-custom.html):
 
 ```js
 import { useState } from "react";
-import yasml from "yasml";
+import yasml from "@thirtytech/yasml";
 
 const [CountProvider, useCountContext] = yasml(() => {
   const [count] = useState(0);
