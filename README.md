@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/yasml.png" alt="yasml logo" width="300" />
+  <img src="https://raw.githubusercontent.com/ThirtyTech/yasml/main/public/yasml.png" alt="yasml logo" width="300" />
 </p>
 
 # YASML
