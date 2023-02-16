@@ -120,7 +120,7 @@ npm:
 npm i @thirtytech/yasml
 ```
 
-Yarn:
+pnpm:
 
 ```sh
 pnpm add @thirtytech/yasml
