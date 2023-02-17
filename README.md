@@ -4,9 +4,9 @@
 
 # YASML
 
-<a href="https://npmjs.org/package/yasml"><img alt="NPM version" src="https://img.shields.io/npm/v/yasml.svg?style=flat-square"></a>
-<a href="https://npmjs.org/package/yasml"><img alt="NPM downloads" src="https://img.shields.io/npm/dm/yasml.svg?style=flat-square"></a>
-<a href="https://unpkg.com/yasml"><img alt="Size" src="https://img.badgesize.io/https://unpkg.com/yasml?style=flat-square"></a>
+<a href="https://npmjs.org/package/@thirtytech/yasml"><img alt="NPM version" src="https://img.shields.io/npm/v/@thirtytech/yasml.svg?style=flat-square"></a>
+<a href="https://npmjs.org/package/@thirtytech/yasml"><img alt="NPM downloads" src="https://img.shields.io/npm/dm/@thirtytech/yasml.svg?style=flat-square"></a>
+<a href="https://unpkg.com/@thirtytech/yasml"><img alt="Size" src="https://img.badgesize.io/https://unpkg.com/@thirtytech/yasml?style=flat-square"></a>
 
 Write local state using [React Hooks](https://reactjs.org/docs/hooks-intro.html) and lift it up to [React Context](https://reactjs.org/docs/context.html) when needed. Protects against unncessary re-renders by isolating state variables into unique contexts.
 
