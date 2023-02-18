@@ -19,12 +19,12 @@ Library is fully type safe with go to definition and find all references end to 
 <table>
   <thead>
     <tr>
-      <th colspan="5"><center>🕹 CodeSandbox demos 🕹</center></th>
+      <th colspan="5"><center>🕹 StackBlitz demos 🕹</center></th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><a href="">Basic Online Sample</a></td>
+      <td><a href="https://stackblitz.com/edit/yasml-basic?file=src/App.tsx">Basic Online Sample</a></td>
     </tr>
   </tbody>
 </table>
