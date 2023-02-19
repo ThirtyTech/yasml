@@ -1,0 +1,19 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "root": true,
+  "parserOptions": {
+    "ecmaVersion": 2018,
+    "project": true
+  },
+  "rules": {
+    "@thirtytech/yasml/match-export-parameters": "warn"
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:@thirtytech/yasml/recommended"
+    // "@thirtytech/yasml"
+  ],
+  "plugins": ["@typescript-eslint", "@thirtytech/yasml"]
+}

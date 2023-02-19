@@ -9,6 +9,7 @@ type StateResult = {
   [key: string]: unknown;
 } & object;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function displayWarning(context: React.Context<any>) {
   const warnMessage = context.displayName
     ? `The context consumer of ${context.displayName} must be wrapped with its corresponding Provider`
@@ -70,11 +71,12 @@ function yasml<Props, Value extends StateResult>(
 
     if (keys.length === 0) {
       contexts.forEach((context) => {
-        const value = useContext(context) as any;
+        const value = useContext(context) as Value[keyof Value];
         if (isDev && value === NO_PROVIDER) {
           displayWarning(context);
         }
-        result[context.displayName as T[number]] = value;
+        const name = context.displayName as keyof Value;
+        result[name] = value;
       });
     } else {
       keys.forEach((key) => {

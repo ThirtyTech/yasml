@@ -14,6 +14,14 @@ No need to think about how to slice up your state for performance reasons initia
 
 Library is fully type safe with go to definition and find all references end to end.
 
+
+## Key Benefits
+
+- Easy api that simply wraps any hook that returns an object
+- Namespaced hooks `MyState.useSelector()` that are relative to their provider and doesn't populate the global variable scope when referencing hook selector with intellisense
+- Start simply be by just using the hook without any paramaters. In cases where you only have a few state variables that all the components will be using.
+- Improved performance by using easy to opt into api to isolate just the variables you'll be using in each componet without having to think about it up front `MyState.useSelector('counter', 'setCounter')`
+
 <br>
 
 <table>

@@ -1,0 +1,4 @@
+eslint/
+dist/
+vite.config.ts
+src/vite-env.d.ts
