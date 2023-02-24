@@ -1,4 +1,10 @@
-import React, { Context, createContext, useEffect, useState } from "react";
+import React, {
+  Context,
+  createContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useContext } from "react";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -27,22 +33,18 @@ function yasml<Props, Value extends StateResult>(
     ...props
   }) => {
     const value = State(props as Props);
-    const [initialized, setInitialized] = useState(false);
 
-    useEffect(() => {
-      Object.keys(value)
-        .reverse()
-        .forEach((key) => {
-          const context = createContext(NO_PROVIDER) as Context<unknown>;
-          context.displayName = key;
-          contexts.set(key as keyof Value, context);
-        });
-      setInitialized(true);
-    }, []);
-
-    if (!initialized) {
-      return null;
-    }
+    useMemo(
+      () =>
+        Object.keys(value)
+          .reverse()
+          .forEach((key) => {
+            const context = createContext(NO_PROVIDER) as Context<unknown>;
+            context.displayName = key;
+            contexts.set(key as keyof Value, context);
+          }),
+      []
+    );
 
     let element = children as React.ReactElement;
 
