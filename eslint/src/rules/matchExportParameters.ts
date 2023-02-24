@@ -121,9 +121,6 @@ function getCallExpression(
   node: TSESTree.CallExpression,
   context: TSESLint.RuleContext<any, any>
 ): TSESTree.CallExpression | undefined {
-  // if (node.callee && node.callee?.parent?.type === 'CallExpression') {
-  //   return node.callee.parent;
-  // }
   const callExpression =
     node.type === "CallExpression"
       ? node

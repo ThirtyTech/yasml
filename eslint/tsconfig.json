@@ -7,8 +7,6 @@
     "lib": ["es2020"],
     "rootDir": "src",
     "declaration": true /* Generates corresponding '.d.ts' file. */,
-    "composite": true,
-
     "outDir": "dist" /* Redirect output structure to the directory. */,
     "removeComments": false /* Do not emit comments to output. */,
     // "noEmit": true,                        /* Do not emit outputs. */
