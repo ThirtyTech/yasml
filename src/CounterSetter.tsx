@@ -1,6 +1,6 @@
-import MyState from "./state/MyState";
+import { useGlobalState } from "./state/MyState";
 
 export function CounterSetter() {
-  const { increment } = MyState.useSelector("increment");
+  const { increment } = useGlobalState('increment');
   return <button onClick={() => increment()}>Increment</button>;
 }

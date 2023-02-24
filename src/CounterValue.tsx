@@ -1,6 +1,6 @@
-import MyState from "./state/MyState";
+import { useGlobalState } from "./state/MyState";
 
 export function CounterValue() {
-  const { counter } = MyState.useSelector();
+  const { counter } = useGlobalState("counter");
   return <div>{counter}</div>;
 }
