@@ -81,7 +81,7 @@ function getMethodName(callExpression: TSESTree.CallExpression) {
 }
 
 function isAncestorOfYasml(
-  node: TSESTree.Node,
+  node: TSESTree.CallExpression,
   context: TSESLint.RuleContext<any, any>
 ) {
   const services = ESLintUtils.getParserServices(context);
@@ -92,19 +92,12 @@ function isAncestorOfYasml(
       callExpression
     ) as ts.CallLikeExpression;
     const signature = tc.getResolvedSignature(tsCallExpression);
-    const v = ts.isFunctionExpression(signature?.declaration as ts.Node);
     if (
       signature &&
-      signature.declaration &&
-      (signature.declaration as ts.FunctionExpression).name &&
-      (signature.declaration.parent?.parent as ts.FunctionExpression)?.name
+      signature.declaration
     ) {
-      const declarationName = (signature?.declaration as ts.FunctionExpression)
-        .name?.escapedText;
-      const parentName = (
-        signature.declaration.parent.parent as ts.FunctionExpression
-      ).name?.escapedText;
-      if (declarationName === "useSelector" && parentName === "yasml") {
+      const isYasmlFound = walkParentsForYasmlName(signature.declaration);
+      if (isYasmlFound) {
         return true;
       }
     }
@@ -112,16 +105,31 @@ function isAncestorOfYasml(
   return false;
 }
 
+function walkParentsForYasmlName(node: ts.Node): ts.FunctionExpression | null {
+  const parent = node.parent
+  if (!parent) {
+    return null;
+  }
+  if (parent && (parent as ts.FunctionExpression).name?.escapedText === 'yasml') {
+    return parent as ts.FunctionExpression;
+  }
+  return walkParentsForYasmlName(node.parent);
+}
+
+
 function getCallExpression(
-  node: TSESTree.Node,
+  node: TSESTree.CallExpression,
   context: TSESLint.RuleContext<any, any>
 ): TSESTree.CallExpression | undefined {
+  // if (node.callee && node.callee?.parent?.type === 'CallExpression') {
+  //   return node.callee.parent;
+  // }
   const callExpression =
     node.type === "CallExpression"
       ? node
       : (context
-          .getAncestors()
-          .find((x) => x.type === "CallExpression") as TSESTree.CallExpression);
+        .getAncestors()
+        .find((x) => x.type === "CallExpression") as TSESTree.CallExpression);
   if (callExpression) {
     return callExpression;
   }
