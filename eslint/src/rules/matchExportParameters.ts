@@ -3,7 +3,7 @@ import { RuleFixer } from "@typescript-eslint/utils/dist/ts-eslint";
 import ts from "typescript";
 
 const rule = ESLintUtils.RuleCreator(
-  (ruleName) => `https://github.com/thirtytech/yasml/${ruleName}`
+  (ruleName) => `https://github.com/thirtytech/yasml/eslint/docs/${ruleName}`
 )({
   name: "match-export-parameters",
   meta: {
