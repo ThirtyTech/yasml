@@ -1,10 +1,4 @@
-import React, {
-  Context,
-  createContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { Context, createContext, useMemo } from "react";
 import { useContext } from "react";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -15,8 +9,7 @@ type StateResult = {
   [key: string]: unknown;
 } & object;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function displayWarning(context: React.Context<any>) {
+function displayWarning(context: React.Context<unknown>) {
   const warnMessage = context.displayName
     ? `The context consumer of ${context.displayName} must be wrapped with its corresponding Provider`
     : "Component must be wrapped with Provider.";
@@ -82,7 +75,7 @@ function yasml<Props, Value extends StateResult>(
       });
     } else {
       keys.forEach((key) => {
-        const context = contexts.get(key as T[number]) as Context<T[number]>;
+        const context = contexts.get(key as T[number]) as Context<unknown>;
         const value = useContext(context) as Value[T[number]];
         if (isDev && value === NO_PROVIDER) {
           displayWarning(context);
