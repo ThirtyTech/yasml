@@ -61,10 +61,10 @@ function yasml<Props, Value extends StateResult>(
 
   function useSelector<T extends (keyof Value)[]>(
     ...keys: T
-    ): T["length"] extends 0 ? Value : Pick<Value, T[number]>;
-    function useSelector<T extends (value: Value) => Partial<Value>>(
-      selector: T
-    ): ReturnType<T>;
+  ): T["length"] extends 0 ? Value : Pick<Value, T[number]>;
+  function useSelector<T extends (value: Value) => Partial<Value>>(
+    selector: T
+  ): ReturnType<T>;
   function useSelector<T extends (keyof Value)[]>(
     ...keys: T | [(value: Value) => Partial<Value>]
   ): T | T["length"] extends 0 ? Value : Pick<Value, T[number]> {
