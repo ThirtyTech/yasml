@@ -62,15 +62,18 @@ function yasml<Props, Value extends StateResult>(
   function useSelector<T extends (keyof Value)[]>(
     ...keys: T
   ): T["length"] extends 0 ? Value : Pick<Value, T[number]>;
-  function useSelector<T extends (value: Value) => Partial<Value>>(
-    selector: T
-  ): ReturnType<T>;
+  function useSelector<
+    T extends (value: Value) => Partial<Value> & Record<string, unknown>
+  >(selector: T): ReturnType<T>;
   function useSelector<T extends (keyof Value)[]>(
     ...keys: T | [(value: Value) => Partial<Value>]
   ): T | T["length"] extends 0 ? Value : Pick<Value, T[number]> {
     let innerKeys = [] as (keyof Value)[];
+    let _cacheFuncResult = {} as Partial<Value>;
+    const isFunction = typeof keys[0] === "function";
     if (typeof keys[0] === "function") {
-      innerKeys = Object.keys(keys[0](_trappedState));
+      _cacheFuncResult = keys[0](_trappedState);
+      innerKeys = Object.keys(_cacheFuncResult);
     } else {
       innerKeys;
     }
@@ -88,11 +91,15 @@ function yasml<Props, Value extends StateResult>(
     } else {
       innerKeys.forEach((key) => {
         const context = contexts.get(key as T[number]) as Context<unknown>;
-        const value = useContext(context) as Value[T[number]];
-        if (isDev && value === NO_PROVIDER) {
-          displayWarning(context);
+        if (context) {
+          const value = useContext(context) as Value[T[number]];
+          if (isDev && value === NO_PROVIDER) {
+            displayWarning(context);
+          }
+          result[key] = value;
+        } else if (isFunction) {
+          result[key] = _cacheFuncResult[key] as Value[T[number]];
         }
-        result[key] = value;
       });
     }
 
