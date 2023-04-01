@@ -1,0 +1,16 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "root": true,
+  "env": {
+    "es2017": true,
+    "browser": true,
+    "node": true
+  },
+  "parserOptions": {
+    "project": true,
+    "sourceType": "module"
+  },
+  "extends": [],
+  "plugins": [],
+  "rules": {}
+}
