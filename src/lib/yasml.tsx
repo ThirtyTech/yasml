@@ -75,7 +75,7 @@ function yasml<Props, Value extends StateResult>(
       _cacheFuncResult = keys[0](_trappedState);
       innerKeys = Object.keys(_cacheFuncResult);
     } else {
-      innerKeys;
+      innerKeys = keys as (keyof Value)[];
     }
     const result = {} as { [key in T[number]]: Value[key] };
 
