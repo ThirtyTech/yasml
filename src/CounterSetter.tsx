@@ -1,7 +1,7 @@
 import { useGlobalState } from "./state/MyState";
 
 export function CounterSetter() {
-  const { increment } = useGlobalState('increment');
+  const { increment } = useGlobalState();
   const state = useGlobalState((state) => ({
     test: state.counter * 2,
     rawr: "goes the lion",
