@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Provider, useSelector } from './Context/MultiCounterSharedState'
 import { useEffect, useRef } from 'react';
+import { within, userEvent } from '@storybook/testing-library'
+import { expect } from '@storybook/jest';
 
 const meta = {
   title: 'Example/Unique Children',
@@ -12,8 +14,20 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Primary: Story = {}
+export const Primary: Story = {
+}
 
+export const Interactive: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // Note: Promise.resolve is a hack because @storybook/testing-library doesn't support async/await due to upstream types. https://github.com/storybookjs/testing-library/issues/10
+    await Promise.resolve(userEvent.click(canvas.getByTestId('child-one-btn')));
+    await Promise.resolve(expect(canvas.getByTestId('child-one-results').children).toHaveLength(2));
+    await Promise.resolve(expect(canvas.getByTestId('child-two-results').children).toHaveLength(1));
+    await Promise.resolve(userEvent.click(canvas.getByTestId('child-two-btn')));
+    await Promise.resolve(expect(canvas.getByTestId('child-two-results').children).toHaveLength(2));
+  }
+}
 
 function UniqueChildren() {
   return <div>
@@ -37,8 +51,8 @@ function ChildOne() {
   });
 
   return <>
-    <button onClick={() => setCounterOne(prev => prev + 1)}>Child One {counterOne}</button>
-    <ul ref={ulRef}></ul>
+    <button data-testid="child-one-btn" onClick={() => setCounterOne(prev => prev + 1)}>Child One {counterOne}</button>
+    <ul data-testid="child-one-results" ref={ulRef}></ul>
   </>
 }
 
@@ -53,7 +67,7 @@ function ChildTwo() {
   })
 
   return <>
-    <button onClick={() => setCounterTwo(prev => prev + 1)}>Child Two {counterTwo}</button>
-    <ul ref={ulRef}></ul>
+    <button data-testid="child-two-btn" onClick={() => setCounterTwo(prev => prev + 1)}>Child Two {counterTwo}</button>
+    <ul data-testid="child-two-results" ref={ulRef}></ul>
   </>
 }
