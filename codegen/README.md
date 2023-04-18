@@ -1,4 +1,4 @@
-# @thirtytechvite-plugin-yasml/
+# @thirtytech/vite-plugin-yasml
 
 <a href="https://npmjs.org/package/@thirtytech/vite-plugin-yasml"><img alt="NPM version" src="https://img.shields.io/npm/v/@thirtytech/vite-plugin-yasml.svg?style=flat-square"></a>
 <a href="https://npmjs.org/package/@thirtytech/vite-plugin-yasml"><img alt="NPM downloads" src="https://img.shields.io/npm/dm/@thirtytech/vite-plugin-yasml.svg?style=flat-square"></a>
