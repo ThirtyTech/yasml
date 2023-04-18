@@ -46,7 +46,7 @@ function ChildOne() {
 
   useEffect(() => {
     const li = document.createElement('li')
-    li.innerHTML = '[ChildOne] Rendered ' + new Date().getTime();
+    li.innerHTML = `[ChildOne] Rendered ${new Date().getTime()}`;
     ulRef.current?.appendChild(li);
   });
 
@@ -62,7 +62,7 @@ function ChildTwo() {
 
   useEffect(() => {
     const li = document.createElement('li');
-    li.innerHTML = '[ChildTwo] Rendered ' + new Date().getTime();
+    li.innerHTML = `[ChildTwo] Rendered ${new Date().getTime()}`;
     ulRef.current?.appendChild(li);
   })
 
