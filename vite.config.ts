@@ -28,7 +28,7 @@ export default defineConfig({
     },
   },
   plugins: [
-    codeGeneratorYasmlPlugin({}),
+    codeGeneratorYasmlPlugin(),
     react({
       jsxRuntime: "classic",
     }),

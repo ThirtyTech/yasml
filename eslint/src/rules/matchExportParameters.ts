@@ -126,8 +126,8 @@ function getCallExpression(
     node.type === "CallExpression"
       ? node
       : (context
-          .getAncestors()
-          .find((x) => x.type === "CallExpression") as TSESTree.CallExpression);
+        .getAncestors()
+        .find((x) => x.type === "CallExpression") as TSESTree.CallExpression);
   if (callExpression) {
     return callExpression;
   }
@@ -139,6 +139,7 @@ function getObjectPattern(
 ): TSESTree.ObjectPattern | undefined {
   const variableDeclarator = context
     .getAncestors()
+    .reverse()
     .find(
       (x) => x.type === "VariableDeclarator"
     ) as TSESTree.VariableDeclarator;
