@@ -29,9 +29,7 @@ export default defineConfig({
   },
   plugins: [
     codeGeneratorYasmlPlugin(),
-    react({
-      jsxRuntime: "classic",
-    }),
+    react(),
     dts({ insertTypesEntry: true }),
   ],
 });
