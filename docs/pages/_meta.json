@@ -1,0 +1,6 @@
+{
+    "index":"Home",
+    "guide": "Common Guide",
+    "eslint": "ESLint",
+    "codegen": "CodeGen with Vite"
+}

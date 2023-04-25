@@ -1,0 +1,36 @@
+# ESLint Rules
+
+`yasml` provides a ESLint rule package that will help you write your state in a more performant way.
+
+By enabling this rule you can ensure that your state is written in a way that will not cause unnecessary re-renders.
+
+## Installation
+
+```bash
+npm install --save-dev @thirtytech/eslint-plugin-yasml @typescript-eslint/parser @typescript-eslint/eslint-plugin
+```
+
+## Usage
+```json
+{
+  "parser": "@typescript-eslint/parser",
+  "root": true,
+  "parserOptions": {
+    "ecmaVersion": 2018,
+    "project": true
+  },
+  "rules": {
+    "@thirtytech/yasml/match-export-parameters": "warn"
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@thirtytech/yasml/recommended"
+  ],
+  "plugins": ["@typescript-eslint", "@thirtytech/yasml"]
+}
+```
+
+You'll add the `yasml` plugin to the list of utilized plugins and then apply the rule using the rules configuration section.
+
+By convention ESLint plugins strip out the `eslint-plugin` from the package name. So don't be confused why the package is called
+`@thirtytech/eslint-plugin-yasml` but the rule is called `@thirtytech/yasml/match-export-parameters`.

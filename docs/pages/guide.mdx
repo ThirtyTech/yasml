@@ -1,0 +1,119 @@
+# Common Configuration
+
+YASML works utilizing the [React Context](https://react.dev/reference/react#context-hooks)
+and adds simplier initialization and type safety API interface.
+
+## Start with a Function
+
+```typescript
+import { useState } from "react";
+function MyState() {
+  const [counter, setCounter] = useState(0);
+  return { counter, setCounter };
+}
+```
+
+You can use any other React hooks inside the function, but you should return an object with the state and mutation functions.
+
+## Create the Yasml Provider / hook combination from state function.
+
+```typescript
+import yasml from '@thirtytech/yasml';
+const { Provider, useSelector } = yasml(MyState);
+```
+
+If you have a simple state or your components are isolated you can use the default provided `Provider` and `useSelector` names.
+But I recommend add variable aliases to add better clarity to your code.
+
+## Alias the Provider and hook
+
+```typescript
+import yasml from '@thirtytech/yasml';
+export const { Provider: MyProvider, useSelector: useMySelector } = yasml(MyState);
+```
+
+If you put your state into a separate file then you simply need to export out these constants for use in your component tree.
+
+## Add Provider to your App component tree
+
+```typescript
+import { MyProvider } from "./MyState";
+
+export default function App() {
+  return (
+    <MyProvider>
+      <MyComponent />
+    </MyProvider>
+  );
+}
+```
+
+## The Magic: Property provider spreading
+
+By design `yasml` will take each individual property of the object returned by the state function and create a selector for it.
+So what you will actually see in the tree is multiple providers. Each contains only a single property
+
+```typescript
+<App>
+  <counter.Provider>
+    <setCounter.Provider>
+      <MyComponent />
+    </setCounter.Provider>
+  </counter.Provider>
+</App>
+```
+
+Now this would be pretty tough to work with if you had to grab each individual value using multiple contexts.
+So what we've done is allow you to call the `useSelector` hook with no arguments and it will return the entire state object.
+
+```typescript
+const { counter, setCounter } = useMySelector();
+```
+
+This makes it quick and easy to get started with `yasml` and allows you to use the library in a very similar way to the built in `useContext` hook from React.
+
+## Re-Renders: Bad
+
+The downside of the above approach is that any mutation to the state object will cause all components to re-render that use the hook.
+This will happen even if they are not utilzing the property that was mutated.
+
+_Note: This is the same behavior as the built in `useContext` hook from React._
+
+Because of the provider isolation model you can specify specifially in the calling method which properties you to want to observe
+changes for. This will allow you to only re-render the components that are actually using the property that was mutated.
+
+```typescript
+const { counter, setCounter } = useMySelector("counter", "setCounter");
+```
+
+Under the hood the `yasml` library is calling each context individually for you and returning a typed object that only contains the properties that you requested in the calling hook.
+You will receive full type safety in both the string properties specified and in the object destructing of the return value.
+
+## ESLint
+We recognized it might feel a little redundant to specify the properties twice. So we created an eslint rule that will automatically identify `useSelector` callers that don't have
+any properties specified and will add the properties for you.
+
+So a typicaly workflow would be to simply destucture the properties you want out of your state object and have the eslint rule populate the `useSelector` call for you.
+
+This can be done at code time or you can have the eslint `auto-fix` applied during save / code formatting.
+
+You can find more details about this in the `@thirtytech/eslint-plugin-yasml` package.
+
+## CodeGen with Vite
+Considering the eslint rule can auto-fix up the code. Why couldn't we just do that for you at build time? So we created a the `@thirtytech/vite-plugin-yasml` plugin
+that will codegen the `useSelector` calls for you. This will allow you to have the best of both worlds. You can use the `useSelector` hook with no arguments and get the full state object
+
+For those not familiar with codegen in the vite build system. You're transpiling all your `jsx`, `tsx` files into js files during build time. So we can take advantage of that and
+generate the `useSelector` calls for you.
+
+This means that when you type
+
+```typescript
+const { counter, setCounter } = useMySelector();
+```
+
+the output code that is generated will be
+
+```typescript
+const { counter, setCounter } = useMySelector("counter", "setCounter");
+```
