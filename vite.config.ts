@@ -9,9 +9,15 @@ const name = packageName.substring(packageName.lastIndexOf("/") + 1);
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  esbuild: {
+    supported: {
+      'top-level-await': true //browsers can handle top-level-await features
+    },
+  },
   build: {
     copyPublicDir: false,
     sourcemap: true,
+    target: 'esnext',
     lib: {
       entry: path.resolve(__dirname, `src/lib/${name}.tsx`),
       name: name,
