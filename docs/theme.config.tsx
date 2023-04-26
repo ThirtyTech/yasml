@@ -52,7 +52,7 @@ const config = {
       <meta property="og:type" content="product" />
       <meta
         property="og:image"
-        content="https://yasml.thirtytech.net/assets/opengraph.png"
+        content="https://yasml.thirtytech.net/opengraph.png"
       />
       {/* Global Site Tag (gtag.js) - Google Analytics */}
       <script
