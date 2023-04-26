@@ -42,6 +42,18 @@ const config = {
         href="/favicon-16x16.png"
       />
       <link rel="manifest" href="/site.webmanifest" />
+      <meta property="og:title" content="Yasml" />
+      <meta property="og:site_name" content="Yasml Documentation" />
+      <meta property="og:url" content="https://yasml.thirtytech.net" />
+      <meta
+        property="og:description"
+        content="Yet another react state management library. Type safe API over React Context"
+      />
+      <meta property="og:type" content="product" />
+      <meta
+        property="og:image"
+        content="https://yasml.thirtytech.net/assets/opengraph.png"
+      />
       {/* Global Site Tag (gtag.js) - Google Analytics */}
       <script
         async
