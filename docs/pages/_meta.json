@@ -2,5 +2,10 @@
     "index":"Home",
     "guide": "Common Guide",
     "eslint": "ESLint",
-    "codegen": "CodeGen with Vite"
+    "codegen": "CodeGen with Vite",
+    "storybook": {
+        "title": "Storybook",
+        "type": "page",
+        "href": "https://yasml-storybook.thirtytech.net"
+    }
 }
