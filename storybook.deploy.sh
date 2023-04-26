@@ -1,1 +1,1 @@
-cd codegen && pnpm install && pnpm build && cd .. && cd eslint && pnpm install && pnpm build && cd .. && pnpm install && pnpm build-storybook
+cd codegen && pnpm install && pnpm build && cd .. && cd eslint && pnpm install && pnpm build && cd .. && pnpm install && pnpm build && pnpm build-storybook
