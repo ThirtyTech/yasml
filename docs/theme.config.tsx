@@ -1,4 +1,5 @@
 import Image from "next/image";
+import script from "next/script";
 
 const config = {
   logo: (
@@ -47,6 +48,7 @@ const config = {
         src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
       />
       <script
+        id="gtag-init"
         dangerouslySetInnerHTML={{
           __html: `
             window.dataLayer = window.dataLayer || [];
