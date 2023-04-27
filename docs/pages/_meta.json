@@ -1,6 +1,7 @@
 {
     "index":"Home",
     "guide": "Common Guide",
+    "advanced": "Advanced Usages",
     "eslint": "ESLint",
     "codegen": "CodeGen with Vite",
     "storybook": {

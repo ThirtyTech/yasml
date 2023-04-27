@@ -1,0 +1,31 @@
+# Advanged Usage
+
+Along with the general guidance there are some additional usages that can be used to further customize the behavior of the library.
+
+## Property Selectors
+
+```typescript copy
+const { counter } = useSelector((state) => ({
+  counter: state.counter,
+}));
+```
+
+By design it will return any value from the context that matches the object property. In this case the `counter` property.
+
+## Custom Selectors
+
+In addition to pulling properties directly off the originally state object. You can also use a custom selector to perform functional updates
+against the state variables.
+
+```typescript copy
+const { counter, double, counterString } = useSelector((state) => ({
+  counter: state.counter,
+  double: state.counter * 2,
+  counterString: state.counter.toString(),
+}));
+```
+
+These manipulations are also type safe returning exactly the object you specify. This flips the story of having to put every
+manipulation of the state into a state. Now you can do it inline with the component when needed.
+
+This streamlines the process instead of having to create an additional dervived state variable.
