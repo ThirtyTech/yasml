@@ -54,19 +54,23 @@ const config = {
         property="og:image"
         content="https://yasml.thirtytech.net/opengraph.png"
       />
-      <Script
-        async
-        src="https://www.googletagmanager.com/gtag/js?id=G-98X7NLHD84"
-      />
-      <Script id="google-analytics" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){window.dataLayer.push(arguments);}
-          gtag('js', new Date());
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
 
-          gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}');
-        `}
-      </Script>
+              gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}', {
+                page_path: window.location.pathname,
+              });
+            `,
+        }}
+      />
+      <Script
+        strategy="afterInteractive"
+        src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
+      />
     </>
   ),
   docsRepositoryBase: "https://github.com/thirtytech/yasml/tree/main/docs",
