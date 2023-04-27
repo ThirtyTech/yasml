@@ -8,25 +8,25 @@ generate the `useSelector` calls for you.
 
 This means that when you type
 
-```typescript
+```typescript copy
 const { counter, setCounter } = useMySelector();
 ```
 
 the output code that is generated will be
 
-```typescript
+```typescript copy
 const { counter, setCounter } = useMySelector("counter", "setCounter");
 ```
 
 ## Installation
 
-```bash
+```bash copy
 npm install --save-dev @thirtytech/vite-plugin-yasml
 ```
 
 ## Usage
 
-```typescript
+```typescript copy
 // vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";

@@ -5,7 +5,7 @@ and adds simplier initialization and type safety API interface.
 
 ## Start with a Function
 
-```typescript
+```typescript copy
 import { useState } from "react";
 function MyState() {
   const [counter, setCounter] = useState(0);
@@ -17,7 +17,7 @@ You can use any other React hooks inside the function, but you should return an 
 
 ## Create the Yasml Provider / hook combination from state function.
 
-```typescript
+```typescript copy
 import yasml from '@thirtytech/yasml';
 const { Provider, useSelector } = yasml(MyState);
 ```
@@ -27,7 +27,7 @@ But I recommend add variable aliases to add better clarity to your code.
 
 ## Alias the Provider and hook
 
-```typescript
+```typescript copy
 import yasml from '@thirtytech/yasml';
 export const { Provider: MyProvider, useSelector: useMySelector } = yasml(MyState);
 ```
@@ -36,7 +36,7 @@ If you put your state into a separate file then you simply need to export out th
 
 ## Add Provider to your App component tree
 
-```typescript
+```typescript copy
 import { MyProvider } from "./MyState";
 
 export default function App() {
@@ -53,7 +53,7 @@ export default function App() {
 By design `yasml` will take each individual property of the object returned by the state function and create a selector for it.
 So what you will actually see in the tree is multiple providers. Each contains only a single property
 
-```typescript
+```typescript copy
 <App>
   <counter.Provider>
     <setCounter.Provider>
@@ -66,7 +66,7 @@ So what you will actually see in the tree is multiple providers. Each contains o
 Now this would be pretty tough to work with if you had to grab each individual value using multiple contexts.
 So what we've done is allow you to call the `useSelector` hook with no arguments and it will return the entire state object.
 
-```typescript
+```typescript copy
 const { counter, setCounter } = useMySelector();
 ```
 
@@ -82,7 +82,7 @@ _Note: This is the same behavior as the built in `useContext` hook from React._
 Because of the provider isolation model you can specify specifially in the calling method which properties you to want to observe
 changes for. This will allow you to only re-render the components that are actually using the property that was mutated.
 
-```typescript
+```typescript copy
 const { counter, setCounter } = useMySelector("counter", "setCounter");
 ```
 
@@ -108,12 +108,12 @@ generate the `useSelector` calls for you.
 
 This means that when you type
 
-```typescript
+```typescript copy
 const { counter, setCounter } = useMySelector();
 ```
 
 the output code that is generated will be
 
-```typescript
+```typescript copy
 const { counter, setCounter } = useMySelector("counter", "setCounter");
 ```
