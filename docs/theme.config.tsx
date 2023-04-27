@@ -1,5 +1,5 @@
 import Image from "next/image";
-import script from "next/script";
+import Script from "next/script";
 
 const config = {
   logo: (
@@ -54,24 +54,19 @@ const config = {
         property="og:image"
         content="https://yasml.thirtytech.net/opengraph.png"
       />
-      {/* Global Site Tag (gtag.js) - Google Analytics */}
-      <script
+      <Script
         async
-        src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
+        src="https://www.googletagmanager.com/gtag/js?id=G-98X7NLHD84"
       />
-      <script
-        id="gtag-init"
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}', {
-              page_path: window.location.pathname,
-            });
-          `,
-        }}
-      />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){window.dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}');
+        `}
+      </Script>
     </>
   ),
   docsRepositoryBase: "https://github.com/thirtytech/yasml/tree/main/docs",
