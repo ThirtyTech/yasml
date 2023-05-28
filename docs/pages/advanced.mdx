@@ -12,6 +12,13 @@ const { counter } = useSelector((state) => ({
 
 By design it will return any value from the context that matches the object property. In this case the `counter` property.
 
+**Note\*** It is recommended to use the string based selectors as they are a little less verbose. But it is personal preference.
+See [Common Guide](/guide) for more details.
+
+```typescript copy
+const { counter } = useMySelector("counter");
+```
+
 ## Custom Selectors
 
 In addition to pulling properties directly off the originally state object. You can also use a custom selector to perform functional updates
