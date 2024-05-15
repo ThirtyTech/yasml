@@ -1,5 +1,7 @@
 import { Plugin } from "vite";
+import { promisify } from 'util'
 const { invoke } = require('eslint_d/lib/linter');
+const invokePromise = promisify(invoke);
 
 export function codeGeneratorYasmlPlugin(): Plugin {
   return {
@@ -7,7 +9,7 @@ export function codeGeneratorYasmlPlugin(): Plugin {
     enforce: "pre",
     async transform(code, id) {
       if ((!id.includes("node_modules") && id.endsWith(".ts")) || id.endsWith(".tsx")) {
-        const result = await invoke(process.cwd(), [
+        const result = await invokePromise(process.cwd(), [
           "--no-eslintrc",
           "--parser",
           "@typescript-eslint/parser",
