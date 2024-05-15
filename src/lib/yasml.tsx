@@ -95,6 +95,7 @@ function yasml<Props, Value extends StateResult>(
           const value = useContext(context) as Value[T[number]];
           if (isDev && value === NO_PROVIDER) {
             displayWarning(context);
+            return null;
           }
           result[key] = value;
         } else if (isFunction) {
