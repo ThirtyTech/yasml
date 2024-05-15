@@ -1,9 +1,9 @@
-import { Plugin } from "vite";
+import { PluginOption } from "vite";
 import { promisify } from 'util'
 const { invoke } = require('eslint_d/lib/linter');
 const invokePromise = promisify(invoke);
 
-export function codeGeneratorYasmlPlugin(): Plugin {
+export function codeGeneratorYasmlPlugin(): PluginOption {
   return {
     name: "codegen-yasml",
     enforce: "pre",
