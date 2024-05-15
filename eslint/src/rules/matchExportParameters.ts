@@ -11,7 +11,7 @@ const rule = ESLintUtils.RuleCreator(
     hasSuggestions: true,
     docs: {
       description: "Match export parameters",
-      recommended: "warn",
+      recommended: "recommended",
     },
     messages: {
       matchExportParameters: "Match export parameters",
