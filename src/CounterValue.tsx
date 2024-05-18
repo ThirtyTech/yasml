@@ -1,6 +1,6 @@
 import { useGlobalState } from "./state/MyState";
 
 export function CounterValue() {
-  const { counter } = useGlobalState("counter");
+  const { counter } = useGlobalState();
   return <div>{counter}</div>;
 }

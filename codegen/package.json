@@ -1,6 +1,6 @@
 {
   "name": "@thirtytech/vite-plugin-yasml",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "main": "dist/codegen-vite-plugin.js",
   "types": "dist/codegen-vite-plugin.d.ts",
   "type": "commonjs",
@@ -14,15 +14,15 @@
   "publishConfig": {
     "access": "public"
   },
+  "peerDependencies": {
+    "@thirtytech/eslint-plugin-yasml": "*",
+    "eslint": "^8.2.0"
+  },
   "devDependencies": {
+    "@types/eslint": "8",
     "@typescript-eslint/parser": "^7.9.0",
     "@typescript-eslint/utils": "^7.9.0",
-    "eslint": "^9.2.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
-  },
-  "dependencies": {
-    "eslint_d": "^13.1.2",
-    "vite": "^5.2.11"
   }
 }

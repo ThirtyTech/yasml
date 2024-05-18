@@ -1,29 +1,48 @@
 import { PluginOption } from "vite";
-import { promisify } from 'util'
-const { invoke } = require('eslint_d/lib/linter');
-const invokePromise = promisify(invoke);
+import { Linter } from "eslint";
+import * as parser from "@typescript-eslint/parser";
+import rule from "@thirtytech/eslint-plugin-yasml/dist/rules/matchExportParameters";
 
 export function codeGeneratorYasmlPlugin(): PluginOption {
+  const linter = new Linter({ cwd: process.cwd(), configType: "eslintrc" });
+  linter.defineRule(
+    "@thirtytech/yasml/match-export-parameters",
+    // @ts-ignore
+    rule
+  );
+  linter.defineParser(
+    "@typescript-eslint/parser",
+    // @ts-ignore
+    parser
+  );
+
   return {
     name: "codegen-yasml",
     enforce: "pre",
     async transform(code, id) {
-      if ((!id.includes("node_modules") && id.endsWith(".ts")) || id.endsWith(".tsx")) {
-        const result = await invokePromise(process.cwd(), [
-          "--no-eslintrc",
-          "--parser",
-          "@typescript-eslint/parser",
-          "--plugin",
-          "@thirtytech/yasml",
-          "--parser-options",
-          "project:true",
-          "--rule",
-          "@thirtytech/yasml/match-export-parameters:1",
-          "--stdin",
-          "--fix-to-stdout",
-          "--stdin-filename",
-          id,
-        ], code);
+      if (
+        (!id.includes("node_modules") && id.endsWith(".ts")) ||
+        id.endsWith(".tsx")
+      ) {
+        const result = await new Promise<string>((resolve) => {
+          const lintedResult = linter.verifyAndFix(
+            code,
+            {
+              rules: { "@thirtytech/yasml/match-export-parameters": "warn" },
+              parser: "@typescript-eslint/parser",
+              parserOptions: {
+                project: true,
+              },
+            },
+            {
+              filename: id,
+            }
+          );
+          if (lintedResult.output) {
+            return resolve(lintedResult.output);
+          }
+          return resolve(code);
+        });
         code = result;
       }
       return code;
