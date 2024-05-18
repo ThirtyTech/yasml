@@ -148,7 +148,7 @@ It's any [custom hook](https://reactjs.org/docs/hooks-custom.html):
 import { useState } from "react";
 import yasml from "@thirtytech/yasml";
 
-const [CountProvider, useCountContext] = yasml(() => {
+const { Provider: CountProvider, useSelector: useCountContext } = yasml(() => {
   const [count] = useState(0);
   return count;
 });
