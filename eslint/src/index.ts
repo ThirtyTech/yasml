@@ -1,6 +1,6 @@
 import matchExportParameters from "./rules/matchExportParameters";
 
-export = {
+export default {
   rules: {
     "match-export-parameters": matchExportParameters,
   },

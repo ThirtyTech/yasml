@@ -1,5 +1,6 @@
 {
   "parser": "@typescript-eslint/parser",
+  "ignorePatterns": ["dist", "node_modules", "test/**/*"],
   "root": true,
   "env": {
     "es2017": true,
