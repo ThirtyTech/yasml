@@ -1,8 +1,9 @@
 {
   "name": "@thirtytech/eslint-plugin-yasml",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "commonjs",
   "scripts": {
     "build": "tsc"
   },
