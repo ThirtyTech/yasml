@@ -15,9 +15,9 @@ type StateResult = {
   [key: string]: unknown;
 } & object;
 
-function displayWarning(context: Context<unknown>) {
-  const warnMessage = context.displayName
-    ? `The context consumer of ${context.displayName} must be wrapped with its corresponding Provider`
+function displayWarning(name: string | undefined) {
+  const warnMessage = name
+    ? `The context consumer of ${name} must be wrapped with its corresponding Provider`
     : "Component must be wrapped with Provider.";
   // eslint-disable-next-line no-console
   console.warn(warnMessage);
@@ -81,25 +81,34 @@ function yasml<Props, Value extends StateResult>(
 
     if (innerKeys.length === 0) {
       contexts.forEach((context) => {
-        const value = useContext(context) as Value[keyof Value];
-        if (isDev && value === NO_PROVIDER) {
-          displayWarning(context);
-        }
         const name = context.displayName as keyof Value;
-        result[name] = value;
+        const value = useContext(context) as Value[keyof Value];
+        if (isDev && value !== NO_PROVIDER) {
+          if (value !== NO_PROVIDER) {
+            _trappedState[name] = value;
+          } else {
+            displayWarning(context.displayName);
+          }
+        }
+        result[name] = value !== NO_PROVIDER ? value : _trappedState[name];
       });
     } else {
       innerKeys.forEach((key) => {
         const context = contexts.get(key as T[number]) as Context<unknown>;
         if (context) {
           const value = useContext(context) as Value[T[number]];
-          if (isDev && value === NO_PROVIDER) {
-            displayWarning(context);
-            return null;
+          if (isDev && value !== NO_PROVIDER) {
+            if (value !== NO_PROVIDER) {
+              _trappedState[key] = value;
+            } else {
+              displayWarning(context.displayName);
+            }
           }
-          result[key] = value;
+          result[key] = value !== NO_PROVIDER ? value : _trappedState[key];
         } else if (isFunction) {
           result[key] = _cacheFuncResult[key] as Value[T[number]];
+        } else if (typeof key === "string") {
+          displayWarning(key);
         }
       });
     }
