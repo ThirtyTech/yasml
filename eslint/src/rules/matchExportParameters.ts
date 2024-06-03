@@ -18,47 +18,74 @@ const rule = ESLintUtils.RuleCreator(
       fixTo: 'Update to "{{result}}"',
     },
     fixable: "code",
-    schema: [],
+    schema: [
+      {
+        type: "object",
+        properties: {
+          onlyHooks: {
+            type: "boolean",
+            default: true,
+          },
+        },
+      },
+    ],
   },
   defaultOptions: [],
   create(context: any) {
+    const options = context.options[0] || {};
+    const onlyHooks =
+      typeof options.onlyHooks === "boolean" ? options.onlyHooks : true;
+
     return {
       CallExpression(node: TSESTree.CallExpression) {
-        const isYasml = isAncestorOfYasml(node, context);
-        if (isYasml) {
-          const callExpression = getCallExpression(node, context);
-          const objectPattern = getObjectPattern(context);
-          if (
-            callExpression &&
-            callExpression.arguments.length === 0 &&
-            objectPattern &&
-            objectPattern.properties.length > 0
-          ) {
-            const missingArguments = objectPattern.properties.map(
-              (x: any) => `'${x.key.name}'`
-            );
+        let functionName = "";
 
-            const methodName = getMethodName(callExpression);
-            if (methodName) {
-              const result = `${methodName}(${missingArguments.join(", ")})`;
-              context.report({
-                node: callExpression,
-                messageId: "matchExportParameters",
-                fix: (fixer: RuleFixer) =>
-                  fixer.replaceText(callExpression, result),
-                suggest: [
-                  {
-                    messageId: "fixTo",
-                    data: { result },
-                    fix(fixer: RuleFixer) {
-                      return fixer.replaceText(
-                        callExpression as TSESTree.Node,
-                        result
-                      );
+        // Check if the callee is an Identifier (like a simple function call)
+        if (node.callee.type === "Identifier") {
+          functionName = node.callee.name;
+        }
+        // Check if the callee is a MemberExpression (like a method or property access)
+        else if (node.callee.type === "MemberExpression" && node.callee.property.type === "Identifier") {
+          functionName = node.callee.property.name;
+        }
+
+        if (!onlyHooks || (functionName.startsWith("use"))) {
+          const isYasml = isAncestorOfYasml(node, context);
+          if (isYasml) {
+            const callExpression = getCallExpression(node, context);
+            const objectPattern = getObjectPattern(context);
+            if (
+              callExpression &&
+              callExpression.arguments.length === 0 &&
+              objectPattern &&
+              objectPattern.properties.length > 0
+            ) {
+              const missingArguments = objectPattern.properties.map(
+                (x: any) => `'${x.key.name}'`
+              );
+
+              const methodName = getMethodName(callExpression);
+              if (methodName) {
+                const result = `${methodName}(${missingArguments.join(", ")})`;
+                context.report({
+                  node: callExpression,
+                  messageId: "matchExportParameters",
+                  fix: (fixer: RuleFixer) =>
+                    fixer.replaceText(callExpression, result),
+                  suggest: [
+                    {
+                      messageId: "fixTo",
+                      data: { result },
+                      fix(fixer: RuleFixer) {
+                        return fixer.replaceText(
+                          callExpression as TSESTree.Node,
+                          result
+                        );
+                      },
                     },
-                  },
-                ],
-              });
+                  ],
+                });
+              }
             }
           }
         }
@@ -126,8 +153,8 @@ function getCallExpression(
     node.type === "CallExpression"
       ? node
       : (context
-        .getAncestors()
-        .find((x) => x.type === "CallExpression") as TSESTree.CallExpression);
+          .getAncestors()
+          .find((x) => x.type === "CallExpression") as TSESTree.CallExpression);
   if (callExpression) {
     return callExpression;
   }
