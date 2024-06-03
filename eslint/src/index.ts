@@ -1,6 +1,7 @@
 import matchExportParameters from "./rules/matchExportParameters";
 
-export default {
+// @ts-ignore
+export = {
   rules: {
     "match-export-parameters": matchExportParameters,
   },
