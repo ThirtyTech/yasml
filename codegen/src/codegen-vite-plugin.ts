@@ -19,33 +19,32 @@ export function codeGeneratorYasmlPlugin(): PluginOption {
   return {
     name: "codegen-yasml",
     enforce: "pre",
-    async transform(code, id) {
+    transform(code, id) {
       if (
         (!id.includes("node_modules") && id.endsWith(".ts")) ||
         id.endsWith(".tsx")
       ) {
-        const result = await new Promise<string>((resolve) => {
-          const lintedResult = linter.verifyAndFix(
-            code,
-            {
-              rules: { "@thirtytech/yasml/match-export-parameters": "warn" },
-              parser: "@typescript-eslint/parser",
-              parserOptions: {
-                project: true,
-              },
+        const lintedResult = linter.verifyAndFix(
+          code,
+          {
+            rules: { "@thirtytech/yasml/match-export-parameters": "warn" },
+            parser: "@typescript-eslint/parser",
+            parserOptions: {
+              project: true,
             },
-            {
-              filename: id,
-            }
-          );
-          if (lintedResult.output) {
-            return resolve(lintedResult.output);
+          },
+          {
+            filename: id,
           }
-          return resolve(code);
-        });
-        code = result;
+        );
+        if (lintedResult.output) {
+          code = lintedResult.output;
+        }
       }
-      return code;
+      return {
+        code,
+        map: null,
+      };
     },
   };
 }
