@@ -11,13 +11,14 @@ const name = packageName.substring(packageName.lastIndexOf("/") + 1);
 export default defineConfig({
   esbuild: {
     supported: {
-      'top-level-await': true //browsers can handle top-level-await features
+      "top-level-await": true, //browsers can handle top-level-await features
     },
   },
   build: {
     copyPublicDir: false,
     sourcemap: true,
-    target: 'esnext',
+    target: "esnext",
+    minify: false,
     lib: {
       entry: path.resolve(__dirname, `src/lib/${name}.tsx`),
       name: name,
