@@ -68,43 +68,35 @@ function yasml<Props, Value extends StateResult>(
   function useSelector<T extends (keyof Value)[]>(
     ...keys: T | [(value: Value) => Partial<Value>]
   ): T | T["length"] extends 0 ? Value : Pick<Value, T[number]> {
-    let innerKeys = [] as (keyof Value)[];
+    let contextKeys = [] as (keyof Value)[];
     let _cacheFuncResult = {} as Partial<Value>;
     const isFunction = typeof keys[0] === "function";
     if (typeof keys[0] === "function") {
       _cacheFuncResult = keys[0](_trappedState);
-      innerKeys = Object.keys(_cacheFuncResult);
+      contextKeys = Object.keys(_cacheFuncResult);
     } else {
-      innerKeys = keys as (keyof Value)[];
+      contextKeys = keys as (keyof Value)[];
     }
     const result = {} as { [key in T[number]]: Value[key] };
 
-    if (innerKeys.length === 0) {
+    if (contextKeys.length === 0) {
       contexts.forEach((context) => {
-        const name = context.displayName as keyof Value;
         const value = useContext(context) as Value[keyof Value];
-        if (isDev && value !== NO_PROVIDER) {
-          if (value !== NO_PROVIDER) {
-            _trappedState[name] = value;
-          } else {
-            displayWarning(context.displayName);
-          }
+        if (isDev && value === NO_PROVIDER) {
+          displayWarning(context.displayName);
         }
-        result[name] = value !== NO_PROVIDER ? value : _trappedState[name];
+        const name = context.displayName as keyof Value;
+        result[name] = value;
       });
     } else {
-      innerKeys.forEach((key) => {
+      contextKeys.forEach((key) => {
         const context = contexts.get(key as T[number]) as Context<unknown>;
         if (context) {
           const value = useContext(context) as Value[T[number]];
-          if (isDev && value !== NO_PROVIDER) {
-            if (value !== NO_PROVIDER) {
-              _trappedState[key] = value;
-            } else {
-              displayWarning(context.displayName);
-            }
+          if (isDev && value === NO_PROVIDER) {
+            displayWarning(context.displayName);
           }
-          result[key] = value !== NO_PROVIDER ? value : _trappedState[key];
+          result[key] = value;
         } else if (isFunction) {
           result[key] = _cacheFuncResult[key] as Value[T[number]];
         } else if (typeof key === "string") {
