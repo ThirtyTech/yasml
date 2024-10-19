@@ -40,3 +40,6 @@ export default defineConfig({
   ],
 });
 ```
+
+Importantly because Vite does not run moduleParsed hook in devopment mode [Universal Hooks](https://vite.dev/guide/api-plugin#universal-hooks)
+you will need to name your state files `*.state.ts` or `*.state.tsx` or `*.hooks.ts` or `*.hooks.tsx` for the codegen plugin to work.

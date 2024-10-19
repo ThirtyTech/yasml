@@ -3,4 +3,14 @@
  The purpose of this documentation is to provide a reference for the YASML react state library.
  It will elaborate in the examples given in the [README](https://github.com/thirtytech/yasml/blob/main/README.md) and provide a more in-depth explanation of the library.
 
+ YASML is a library that provides a way to manage state in a React application. 
+ It is a simple and easy-to-use library that allows you to define your state in a single file and use it 
+ throughout your application. It is inspired by the [Constate](https://github.com/diegohaz/constate) library.
+
+ The single reason most important reason was to create this library was to isolate renders when using the `useSelector` hook. 
+ While Constate supports selectors they had to be named and named multiple times for each combination of state pulled.
+
+ This library allows you to use the `useSelector` hook without any arguments and get any state property without
+ the naming decisions or losing the ability to isolate renders.
+
  
