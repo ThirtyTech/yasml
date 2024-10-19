@@ -45,11 +45,14 @@ const rule = ESLintUtils.RuleCreator(
           functionName = node.callee.name;
         }
         // Check if the callee is a MemberExpression (like a method or property access)
-        else if (node.callee.type === "MemberExpression" && node.callee.property.type === "Identifier") {
+        else if (
+          node.callee.type === "MemberExpression" &&
+          node.callee.property.type === "Identifier"
+        ) {
           functionName = node.callee.property.name;
         }
 
-        if (!onlyHooks || (functionName.startsWith("use"))) {
+        if (!onlyHooks || functionName.startsWith("use")) {
           const isYasml = isAncestorOfYasml(node, context);
           if (isYasml) {
             const callExpression = getCallExpression(node, context);
@@ -70,22 +73,26 @@ const rule = ESLintUtils.RuleCreator(
                 context.report({
                   node: callExpression,
                   messageId: "matchExportParameters",
-                  // fix: (fixer: RuleFixer) =>
-                  //   fixer.replaceText(callExpression, result),
-                  suggest: [
-                    {
-                      messageId: "fixTo",
-                      data: { result },
-                      fix(fixer: RuleFixer) {
-                        return fixer.replaceText(
-                          callExpression as TSESTree.Node,
-                          result
-                        );
-                      },
-                    },
-                  ],
+                  fix: (fixer: RuleFixer) =>
+                    fixer.replaceText(callExpression, result),
                 });
               }
+            } else if (
+              callExpression &&
+              objectPattern &&
+              callExpression.arguments.length !==
+                objectPattern.properties.length
+            ) {
+              const methodName = getMethodName(callExpression);
+              const missingArguments = objectPattern.properties.map(
+                (x: any) => `'${x.key.name}'`);
+              const result = `${methodName}(${missingArguments.join(", ")})`;
+              context.report({
+                node: callExpression,
+                messageId: "matchExportParameters",
+                fix: (fixer: RuleFixer) =>
+                  fixer.replaceText(callExpression, result),
+              });
             }
           }
         }
