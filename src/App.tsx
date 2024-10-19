@@ -1,6 +1,6 @@
 import reactLogo from "./assets/react.svg";
 import "./App.css";
-import { GlobalStateProvider } from "./state/MyState";
+import { GlobalStateProvider } from "./state/MyState.state";
 import { CounterSetter } from "./CounterSetter";
 import { CounterValue } from "./CounterValue";
 import { useState } from "react";

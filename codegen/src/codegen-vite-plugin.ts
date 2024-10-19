@@ -24,21 +24,23 @@ export function codeGeneratorYasmlPlugin(): PluginOption {
         (!id.includes("node_modules") && id.endsWith(".ts")) ||
         id.endsWith(".tsx")
       ) {
-        const lintedResult = linter.verifyAndFix(
-          code,
-          {
-            rules: { "@thirtytech/yasml/match-export-parameters": "warn" },
-            parser: "@typescript-eslint/parser",
-            parserOptions: {
-              project: true,
+        if (code.includes(".state") || code.includes(".hooks")) {
+          const lintedResult = linter.verifyAndFix(
+            code,
+            {
+              rules: { "@thirtytech/yasml/match-export-parameters": "warn" },
+              parser: "@typescript-eslint/parser",
+              parserOptions: {
+                project: true,
+              },
             },
-          },
-          {
-            filename: id,
+            {
+              filename: id,
+            }
+          );
+          if (lintedResult.output) {
+            code = lintedResult.output;
           }
-        );
-        if (lintedResult.output) {
-          code = lintedResult.output;
         }
       }
       return {

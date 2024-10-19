@@ -70,8 +70,8 @@ const rule = ESLintUtils.RuleCreator(
                 context.report({
                   node: callExpression,
                   messageId: "matchExportParameters",
-                  fix: (fixer: RuleFixer) =>
-                    fixer.replaceText(callExpression, result),
+                  // fix: (fixer: RuleFixer) =>
+                  //   fixer.replaceText(callExpression, result),
                   suggest: [
                     {
                       messageId: "fixTo",

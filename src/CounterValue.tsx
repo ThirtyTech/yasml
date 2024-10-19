@@ -1,4 +1,4 @@
-import { useGlobalState } from "./state/MyState";
+import { useGlobalState } from "./state/MyState.state";
 
 export function CounterValue() {
   const { counter } = useGlobalState();
