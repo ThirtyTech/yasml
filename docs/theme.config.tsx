@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Script from "next/script";
 
 const config = {
   logo: (
@@ -8,7 +7,7 @@ const config = {
         src="/yasml.png"
         width={40}
         height={40}
-        style={{ marginRight: 14 }}
+        style={{ marginRight: 14, width: 40, height: 40 }}
         alt="yasml logo"
       />{" "}
       YASML Documentation
@@ -54,35 +53,18 @@ const config = {
         property="og:image"
         content="https://yasml.thirtytech.net/opengraph.png"
       />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-
-              gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}', {
-                page_path: window.location.pathname,
-              });
-            `,
-        }}
-      />
-      <Script
-        strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS}`}
-      />
     </>
   ),
   docsRepositoryBase: "https://github.com/thirtytech/yasml/tree/main/docs",
   footer: {
-    text: (
-      <span>
-        MIT {new Date().getFullYear()} ©{" "}
-        <a href="https://thirtytech.net" target="_blank">
-          ThirtyTech Inc
-        </a>
-        .
-      </span>
+    content: (
+        <span>
+          MIT {new Date().getFullYear()} ©{" "}
+          <a href="https://thirtytech.net" target="_blank">
+            ThirtyTech Inc
+          </a>
+          .
+        </span>
     ),
   },
 };
