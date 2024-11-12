@@ -1,7 +1,7 @@
 {
   "name": "@thirtytech/yasml",
   "description": "Yet another react state management library. Easy to work with and feels like regular hooks.",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "files": [
     "dist"
   ],
@@ -31,9 +31,9 @@
     "test-storybook": "test-storybook",
     "build-storybook": "storybook build"
   },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+  "peerDependencies": {
+    "react": ">=18.0.0 <20.0.0",
+    "react-dom": ">=18.0.0 <20.0.0"
   },
   "devDependencies": {
     "@storybook/addon-essentials": "^7.0.18",
@@ -58,6 +58,8 @@
     "@vitejs/plugin-react": "^4.0.0",
     "eslint": "^8.41.0",
     "prop-types": "^15.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "storybook": "^7.0.18",
     "typescript": "^5.0.4",
     "vite": "^4.3.9",
