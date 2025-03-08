@@ -3,24 +3,33 @@ import { Linter } from "eslint";
 import * as parser from "@typescript-eslint/parser";
 import rule from "@thirtytech/eslint-plugin-yasml/dist/rules/matchExportParameters";
 
-export function codeGeneratorYasmlPlugin({
-  patterns,
-}: {
-  patterns: string | string[] | (RegExp | RegExp[]);
-}): PluginOption {
-  const linter = new Linter({ cwd: process.cwd(), configType: "eslintrc" });
-  // Check if patterns is an array or string of regex patterns and set that to an array
-  if (typeof patterns === "string") {
-    patterns = [patterns];
-  } else if (Array.isArray(patterns)) {
-    patterns = patterns.map((pattern) =>
-      typeof pattern === "string" ? new RegExp(pattern) : pattern
-    );
-  } else if (patterns instanceof RegExp) {
-    patterns = [patterns];
-  }
+type CodeGeneratorYasmlPluginPatternOptions = {
+  allFiles?: never;
+  patterns?: string | string[] | (RegExp | RegExp[]);
+};
 
-  if (!patterns) {
+type CodeGeneratorYasmlPluginAllFilesOptions = {
+  patterns?: never;
+  allFiles?: true;
+};
+
+type CodeGeneratorYasmlPluginOptions =
+  | CodeGeneratorYasmlPluginPatternOptions
+  | CodeGeneratorYasmlPluginAllFilesOptions;
+
+export function codeGeneratorYasmlPlugin(
+  options: CodeGeneratorYasmlPluginOptions
+): PluginOption {
+  const linter = new Linter({ cwd: process.cwd(), configType: "eslintrc" });
+  let patterns: string[] | RegExp[] = [];
+
+  if ("patterns" in options && typeof options.patterns === "string") {
+    patterns = [options.patterns];
+  } else if ("patterns" in options && options.patterns instanceof RegExp) {
+    patterns = [options.patterns];
+  } else if ("allFiles" in options) {
+    patterns = [];
+  } else if (!patterns && !options.allFiles) {
     patterns = [/\.state/g, /\.hooks/g];
   }
 
@@ -43,7 +52,7 @@ export function codeGeneratorYasmlPlugin({
         (!id.includes("node_modules") && id.endsWith(".ts")) ||
         id.endsWith(".tsx")
       ) {
-        const matchesPattern = patterns.some((pattern) =>
+        const matchesPattern = patterns.some((pattern: any) =>
           typeof pattern === "string"
             ? code.includes(pattern)
             : pattern.test(code)
