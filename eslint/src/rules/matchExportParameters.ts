@@ -159,8 +159,8 @@ function getCallExpression(
   const callExpression =
     node.type === "CallExpression"
       ? node
-      : (context
-          .getAncestors()
+      : (context.sourceCode
+          .getAncestors(node)
           .find((x) => x.type === "CallExpression") as TSESTree.CallExpression);
   if (callExpression) {
     return callExpression;

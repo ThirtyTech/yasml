@@ -35,7 +35,9 @@ export default defineConfig({
     },
   },
   plugins: [
-    codeGeneratorYasmlPlugin(),
+    codeGeneratorYasmlPlugin({
+      patterns: [/State\"\;/, /\.state/, /\.hooks/],
+    }),
     react(),
     dts({ insertTypesEntry: true }),
   ],
