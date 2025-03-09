@@ -8,7 +8,7 @@ type CodeGeneratorYasmlPluginPatternOptions = {
 };
 
 export function codeGeneratorYasmlPlugin(
-  { patterns }: CodeGeneratorYasmlPluginPatternOptions
+  { patterns }: CodeGeneratorYasmlPluginPatternOptions | undefined = {}
 ): PluginOption {
   const linter = new Linter({ cwd: process.cwd(), configType: "eslintrc" });
 
