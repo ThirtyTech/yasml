@@ -9,11 +9,6 @@ const name = packageName.substring(packageName.lastIndexOf("/") + 1);
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  esbuild: {
-    supported: {
-      "top-level-await": true, //browsers can handle top-level-await features
-    },
-  },
   build: {
     copyPublicDir: false,
     sourcemap: true,
@@ -40,6 +35,9 @@ export default defineConfig({
     //   patterns: [/State\"\;/, /\.state/, /\.hooks/],
     // }),
     react(),
-    dts({ insertTypesEntry: true }),
+    dts({
+      insertTypesEntry: true,
+      include: ["src/lib"],
+    }),
   ],
 });

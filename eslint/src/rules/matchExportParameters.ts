@@ -1,5 +1,4 @@
 import { ESLintUtils, TSESLint, TSESTree } from "@typescript-eslint/utils";
-import { RuleFixer } from "@typescript-eslint/utils/dist/ts-eslint";
 import ts from "typescript";
 
 const rule = ESLintUtils.RuleCreator(
@@ -73,7 +72,7 @@ const rule = ESLintUtils.RuleCreator(
                 context.report({
                   node: callExpression,
                   messageId: "matchExportParameters",
-                  fix: (fixer: RuleFixer) =>
+                  fix: (fixer: TSESLint.RuleFixer) =>
                     fixer.replaceText(callExpression, result),
                 });
               }
@@ -90,7 +89,7 @@ const rule = ESLintUtils.RuleCreator(
               context.report({
                 node: callExpression,
                 messageId: "matchExportParameters",
-                fix: (fixer: RuleFixer) =>
+                fix: (fixer: TSESLint.RuleFixer) =>
                   fixer.replaceText(callExpression, result),
               });
             }

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Provider } from "./Context/SimpleSharedCounterState";
 import { CustomSelector } from "./CustomSelector";
 import code from "./CustomSelector?raw";

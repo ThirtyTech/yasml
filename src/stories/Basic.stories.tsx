@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Basic } from "./Basic";
 import code from "./Basic?raw";
 import { Provider } from "./Context/SimpleSharedCounterState";
