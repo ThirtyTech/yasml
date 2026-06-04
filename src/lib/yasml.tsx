@@ -64,12 +64,14 @@ function yasml<Props, Value extends StateResult>(
   };
 
   const Provider: FC<PropsWithChildren<Props>> = ({ children, ...props }) => {
-    let element = children as ReactElement;
     const stateValues = State(props as Props);
-    _cachedState = { ..._cachedState, ...stateValues };
-    if (typeof stateValues !== "object") {
+    // Validate before using the result anywhere (typeof null === "object", so
+    // null must be rejected explicitly).
+    if (stateValues === null || typeof stateValues !== "object") {
       throw new Error("The state must return an object.");
     }
+    let element = children as ReactElement;
+    _cachedState = { ..._cachedState, ...stateValues };
 
     // Keys are unknown until State() runs, so contexts are discovered on the
     // first render. getOrCreateContext is idempotent, so this is cheap on
@@ -148,7 +150,7 @@ function yasml<Props, Value extends StateResult>(
 
     const contextKeys =
       keys.length === 0
-        ? (Array.from(contexts.keys()) as (keyof Value)[])
+        ? Array.from(contexts.keys())
         : (keys as (keyof Value)[]);
     const result = {} as { [key in T[number]]: Value[key] };
 
