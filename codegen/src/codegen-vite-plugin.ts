@@ -1,7 +1,7 @@
-import { PluginOption } from "vite";
-import { Linter } from "eslint";
+import type { PluginOption } from "vite";
+import { Linter, type Rule } from "eslint";
 import * as parser from "@typescript-eslint/parser";
-import rule from "@thirtytech/eslint-plugin-yasml/dist/rules/matchExportParameters";
+import { matchExportParameters } from "@thirtytech/eslint-plugin-yasml";
 
 type CodeGeneratorYasmlPluginPatternOptions = {
   patterns?: string[] | RegExp[];
@@ -14,8 +14,10 @@ export function codeGeneratorYasmlPlugin(
 
   linter.defineRule(
     "@thirtytech/yasml/match-export-parameters",
-    // @ts-ignore
-    rule
+    // The rule is built with @typescript-eslint's RuleCreator, whose RuleModule
+    // type is structurally compatible with eslint's at runtime but not assignable
+    // in TS. Cast at this one boundary rather than weakening the import to `any`.
+    matchExportParameters as unknown as Rule.RuleModule
   );
   linter.defineParser(
     "@typescript-eslint/parser",

@@ -3,7 +3,7 @@
   "exclude": ["node_modules", "dist"], 
   "compilerOptions": {
     "target": "ES2019" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */,
-    "module": "CommonJS" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
+    "module": "ESNext" /* Emit ES modules; package is "type": "module". */,
     "lib": ["es2020"],
     "rootDir": "./src",
     "declaration": true /* Generates corresponding '.d.ts' file. */,
@@ -34,7 +34,7 @@
     "resolveJsonModule": true /* Allow importing of .JSON modules */,
     "allowJs": true,
     /* ModuleMock Resolution Options */
-    "moduleResolution": "node" /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */,
+    "moduleResolution": "bundler" /* Reads package.json "exports" so ESM-only deps like vite resolve; pairs with module: esnext. */,
     // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */
     // "typeRoots": [],                       /* List of folders to include type definitions from. */
     // "types": [],                           /* Type declaration files to be included in compilation. */

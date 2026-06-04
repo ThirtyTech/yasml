@@ -3,9 +3,9 @@
   "version": "1.3.0",
   "main": "dist/codegen-vite-plugin.js",
   "types": "dist/codegen-vite-plugin.d.ts",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsgo",
     "test": "ts-node test/codegen.test.ts"
   },
   "files": [
@@ -19,9 +19,11 @@
     "eslint": "^8.2.0"
   },
   "devDependencies": {
+    "@thirtytech/eslint-plugin-yasml": "workspace:*",
     "@types/eslint": "8",
     "@typescript-eslint/parser": "^7.9.0",
     "@typescript-eslint/utils": "^7.9.0",
+    "@typescript/native-preview": "7.0.0-dev.20260604.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }
