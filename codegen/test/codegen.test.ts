@@ -19,7 +19,7 @@ linter.defineParser(
   parser
 );
 const result = linter.verifyAndFix(
-  `import { useGlobalState } from "./state/MyState";
+  `import { useGlobalState } from "./state/MyState.state";
 
   export function CounterValue() {
     const { counter } = useGlobalState()
@@ -38,6 +38,19 @@ const result = linter.verifyAndFix(
 );
 
 console.log(result);
+
+// The rule must rewrite `useGlobalState()` to match the destructured
+// properties. Resolving the import to a real yasml factory is what lets the
+// rule fire, so this also guards against the type-resolution path silently
+// breaking (which previously left the rule a no-op).
+const expected = "useGlobalState('counter')";
+if (!result.fixed || !result.output.includes(expected)) {
+  console.error(
+    `Expected output to be fixed and contain ${expected}, got:\n${result.output}`
+  );
+  process.exit(1);
+}
+console.log("ok: rule rewrote useGlobalState() to useGlobalState('counter')");
 
 // invoke(
 //   projectPath,
