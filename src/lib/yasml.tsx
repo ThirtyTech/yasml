@@ -71,30 +71,18 @@ function yasml<Props, Value extends StateResult>(
       throw new Error("The state must return an object.");
     }
 
+    // Keys are unknown until State() runs, so contexts are discovered on the
+    // first render. getOrCreateContext is idempotent, so this is cheap on
+    // subsequent renders and shares one creation path with useSelector.
     Object.keys(stateValues)
       .sort((a, b) => a.localeCompare(b))
       .forEach((key) => {
-        if (!contexts.has(key as keyof Value)) {
-          const context = createContext(NO_PROVIDER) as Context<unknown>;
-          context.displayName = key;
-          contexts.set(key as keyof Value, context);
-          if (isDev) {
-            const cache = _cachedContext.get(State.name);
-            if (cache) {
-              cache.set(key, context);
-            } else {
-              _cachedContext.set(State.name, new Map([[key, context]]));
-            }
-          }
-        }
-        const context = contexts.get(key as keyof Value);
-        if (context) {
-          element = (
-            <context.Provider value={stateValues[key]}>
-              {element}
-            </context.Provider>
-          );
-        }
+        const context = getOrCreateContext(key as keyof Value);
+        element = (
+          <context.Provider value={stateValues[key]}>
+            {element}
+          </context.Provider>
+        );
       });
 
     return element;
