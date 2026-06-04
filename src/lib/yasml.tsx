@@ -82,66 +82,81 @@ function yasml<Props, Value extends StateResult>(
   function useSelector<T extends (keyof Value)[]>(
     ...keys: T | [(value: Value) => Partial<Value>]
   ): T | T["length"] extends 0 ? Value : Pick<Value, T[number]> {
-    let contextKeys = [] as (keyof Value)[];
-    let _cacheFuncResult = {} as Partial<Value>;
-    const isFunction = typeof keys[0] === "function";
+    // Function/custom selector: discover which source keys the selector reads
+    // via a recording proxy, subscribe to exactly those contexts, then recompute
+    // the result from the *live* context values. This keeps derived and renamed
+    // values correct and re-renders the component when the values they depend on
+    // change (previously the result was computed once from stale cached state).
     if (typeof keys[0] === "function") {
-      _cacheFuncResult = keys[0](_cachedState);
-      contextKeys = Object.keys(_cacheFuncResult);
-    } else {
-      contextKeys = keys as (keyof Value)[];
-    }
-    const result = {} as { [key in T[number]]: Value[key] };
+      const selector = keys[0] as (value: Value) => Partial<Value>;
+      const readKeys = new Set<keyof Value>();
+      const probe = new Proxy(
+        _cachedState as Record<string | symbol, unknown>,
+        {
+          get(target, prop) {
+            readKeys.add(prop as keyof Value);
+            return target[prop];
+          },
+        }
+      );
+      // Run once against the cached state purely to record dependencies.
+      selector(probe as unknown as Value);
 
-    if (contextKeys.length === 0) {
-      contexts.forEach((context) => {
-        const name = context.displayName as keyof Value;
+      const live = {} as Value;
+      readKeys.forEach((key) => {
+        const context = contexts.get(key);
+        if (!context) return;
         const value = useContext(context) as Value[keyof Value];
 
         if (isDev && value === NO_PROVIDER) {
           displayWarning(context.displayName);
         }
 
-        // Stores last known value from context. Used for not reloading
-        if (isDev && value !== NO_PROVIDER) {
-          _cachedState[name] = value;
-        }
-        result[name] = value;
-
-        // Handles condition during hot reload where value is lost
-        if (isDev && value === NO_PROVIDER && name in _cachedState) {
-          result[name] = _cachedState[name];
+        if (value === NO_PROVIDER && key in _cachedState) {
+          // Hot-reload / missing-provider fallback to last known value.
+          live[key] = _cachedState[key];
+        } else {
+          live[key] = value;
+          if (isDev && value !== NO_PROVIDER) {
+            _cachedState[key] = value;
+          }
         }
       });
-    } else {
-      contextKeys.forEach((key) => {
-        const context = contexts.get(key as T[number]) as Context<unknown>;
 
-        if (context) {
-          const value = useContext(context) as Value[T[number]];
+      // Recompute from the live values so derived/renamed results are correct.
+      return selector(live) as unknown as Pick<Value, T[number]>;
+    }
 
-          if (isDev && value === NO_PROVIDER) {
-            displayWarning(context.displayName);
-          }
+    const contextKeys =
+      keys.length === 0
+        ? (Array.from(contexts.keys()) as (keyof Value)[])
+        : (keys as (keyof Value)[]);
+    const result = {} as { [key in T[number]]: Value[key] };
 
+    contextKeys.forEach((key) => {
+      const context = contexts.get(key as T[number]) as Context<unknown>;
+
+      if (context) {
+        const value = useContext(context) as Value[T[number]];
+
+        if (isDev && value === NO_PROVIDER) {
+          displayWarning(context.displayName);
+        }
+
+        if (value === NO_PROVIDER && key in _cachedState) {
+          // Handles condition during hot reload where value is lost
+          result[key] = _cachedState[key];
+        } else {
+          result[key] = value;
           // Stores last known value from context. Used for not reloading
           if (isDev && value !== NO_PROVIDER) {
             _cachedState[key] = value;
           }
-
-          result[key] = value;
-
-          // Handles condition during hot reload where value is lost
-          if (isDev && value === NO_PROVIDER && key in _cachedState) {
-            result[key] = _cachedState[key];
-          }
-        } else if (isFunction) {
-          result[key] = _cacheFuncResult[key] as Value[T[number]];
-        } else if (typeof key === "string") {
-          displayWarning(key);
         }
-      });
-    }
+      } else if (typeof key === "string") {
+        displayWarning(key);
+      }
+    });
 
     return result;
   }
