@@ -35,66 +35,52 @@ const rule = ESLintUtils.RuleCreator(
     const onlyHooks =
       typeof options.onlyHooks === "boolean" ? options.onlyHooks : true;
 
+    // Parser services and the type checker are constant for the whole file, so
+    // resolve them once here instead of on every CallExpression visit.
+    const services = ESLintUtils.getParserServices(context);
+    const checker = services.program.getTypeChecker();
+
     return {
       CallExpression(node: TSESTree.CallExpression) {
-        let functionName = "";
-
-        // Check if the callee is an Identifier (like a simple function call)
-        if (node.callee.type === "Identifier") {
-          functionName = node.callee.name;
+        // 1. Cheap name gate.
+        if (onlyHooks && !getCalleeName(node).startsWith("use")) {
+          return;
         }
-        // Check if the callee is a MemberExpression (like a method or property access)
-        else if (
-          node.callee.type === "MemberExpression" &&
-          node.callee.property.type === "Identifier"
+
+        // 2. Cheap AST gate. A fix is only ever produced when the call is
+        //    destructured into an object pattern whose property count differs
+        //    from the current argument count. Everything else is a no-op, so
+        //    bail out before doing any (expensive) type resolution.
+        const objectPattern = getObjectPattern(context);
+        if (
+          !objectPattern ||
+          node.arguments.length === objectPattern.properties.length
         ) {
-          functionName = node.callee.property.name;
+          return;
         }
 
-        if (!onlyHooks || functionName.startsWith("use")) {
-          const isYasml = isAncestorOfYasml(node, context);
-          if (isYasml) {
-            const callExpression = getCallExpression(node, context);
-            const objectPattern = getObjectPattern(context);
-            if (
-              callExpression &&
-              callExpression.arguments.length === 0 &&
-              objectPattern &&
-              objectPattern.properties.length > 0
-            ) {
-              const missingArguments = objectPattern.properties.map(
-                (x: any) => `'${x.key.name}'`
-              );
-
-              const methodName = getMethodName(callExpression);
-              if (methodName) {
-                const result = `${methodName}(${missingArguments.join(", ")})`;
-                context.report({
-                  node: callExpression,
-                  messageId: "matchExportParameters",
-                  fix: (fixer: TSESLint.RuleFixer) =>
-                    fixer.replaceText(callExpression, result),
-                });
-              }
-            } else if (
-              callExpression &&
-              objectPattern &&
-              callExpression.arguments.length !==
-                objectPattern.properties.length
-            ) {
-              const methodName = getMethodName(callExpression);
-              const missingArguments = objectPattern.properties.map(
-                (x: any) => `'${x.key.name}'`);
-              const result = `${methodName}(${missingArguments.join(", ")})`;
-              context.report({
-                node: callExpression,
-                messageId: "matchExportParameters",
-                fix: (fixer: TSESLint.RuleFixer) =>
-                  fixer.replaceText(callExpression, result),
-              });
-            }
-          }
+        // 3. Expensive gate last: confirm the call resolves into a yasml factory.
+        if (!isAncestorOfYasml(node, services, checker)) {
+          return;
         }
+
+        const methodName = getMethodName(node);
+        // Preserve original behaviour: when clearing all arguments we require a
+        // resolvable method name; the general mismatch case keeps its prior
+        // shape (which may interpolate an undefined method name).
+        if (node.arguments.length === 0 && !methodName) {
+          return;
+        }
+
+        const missingArguments = objectPattern.properties.map(
+          (x: any) => `'${x.key.name}'`
+        );
+        const result = `${methodName}(${missingArguments.join(", ")})`;
+        context.report({
+          node,
+          messageId: "matchExportParameters",
+          fix: (fixer: TSESLint.RuleFixer) => fixer.replaceText(node, result),
+        });
       },
     };
   },
@@ -115,24 +101,30 @@ function getMethodName(callExpression: TSESTree.CallExpression) {
   return undefined;
 }
 
+function getCalleeName(node: TSESTree.CallExpression): string {
+  if (node.callee.type === "Identifier") {
+    return node.callee.name;
+  }
+  if (
+    node.callee.type === "MemberExpression" &&
+    node.callee.property.type === "Identifier"
+  ) {
+    return node.callee.property.name;
+  }
+  return "";
+}
+
 function isAncestorOfYasml(
   node: TSESTree.CallExpression,
-  context: TSESLint.RuleContext<any, any>
+  services: any,
+  checker: ts.TypeChecker
 ) {
-  const services = ESLintUtils.getParserServices(context);
-  const tc = services.program.getTypeChecker();
-  const callExpression = getCallExpression(node, context);
-  if (callExpression) {
-    const tsCallExpression = services.esTreeNodeToTSNodeMap.get(
-      callExpression
-    ) as ts.CallLikeExpression;
-    const signature = tc.getResolvedSignature(tsCallExpression);
-    if (signature && signature.declaration) {
-      const isYasmlFound = walkParentsForYasmlName(signature.declaration);
-      if (isYasmlFound) {
-        return true;
-      }
-    }
+  const tsCallExpression = services.esTreeNodeToTSNodeMap.get(
+    node
+  ) as ts.CallLikeExpression;
+  const signature = checker.getResolvedSignature(tsCallExpression);
+  if (signature && signature.declaration) {
+    return walkParentsForYasmlName(signature.declaration) !== null;
   }
   return false;
 }
@@ -151,33 +143,17 @@ function walkParentsForYasmlName(node: ts.Node): ts.FunctionExpression | null {
   return walkParentsForYasmlName(node.parent);
 }
 
-function getCallExpression(
-  node: TSESTree.CallExpression,
-  context: TSESLint.RuleContext<any, any>
-): TSESTree.CallExpression | undefined {
-  const callExpression =
-    node.type === "CallExpression"
-      ? node
-      : (context.sourceCode
-          .getAncestors(node)
-          .find((x) => x.type === "CallExpression") as TSESTree.CallExpression);
-  if (callExpression) {
-    return callExpression;
-  }
-  return undefined;
-}
-
 function getObjectPattern(
   context: TSESLint.RuleContext<any, any>
 ): TSESTree.ObjectPattern | undefined {
-  const variableDeclarator = context
-    .getAncestors()
-    .reverse()
-    .find(
-      (x) => x.type === "VariableDeclarator"
-    ) as TSESTree.VariableDeclarator;
-  if (variableDeclarator && variableDeclarator.id.type === "ObjectPattern") {
-    return variableDeclarator.id;
+  // Walk ancestors from the innermost outward and stop at the nearest
+  // VariableDeclarator. Iterating in reverse avoids allocating a reversed copy.
+  const ancestors = context.getAncestors();
+  for (let i = ancestors.length - 1; i >= 0; i--) {
+    const ancestor = ancestors[i];
+    if (ancestor.type === "VariableDeclarator") {
+      return ancestor.id.type === "ObjectPattern" ? ancestor.id : undefined;
+    }
   }
   return undefined;
 }
