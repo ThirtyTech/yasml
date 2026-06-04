@@ -3,7 +3,7 @@
   "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/*.spec.ts"],
   "compilerOptions": {
     "target": "ESNext" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */,
-    "module": "CommonJS" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
+    "module": "ESNext" /* Emit ES modules; package is "type": "module". */,
     "lib": ["es2020"],
     "rootDir": "src",
     "declaration": true /* Generates corresponding '.d.ts' file. */,
@@ -33,7 +33,7 @@
     "resolveJsonModule": true /* Allow importing of .JSON modules */,
     "allowJs": true,
     /* ModuleMock Resolution Options */
-    "moduleResolution": "node" /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */,
+    "moduleResolution": "bundler" /* Reads package.json "exports" maps; pairs with module: esnext. */,
     // "baseUrl": "./",                       /* Base directory to resolve non-absolute module names. */
     // "paths": {},                           /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
     // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */
