@@ -119,7 +119,7 @@ function yasml<Props, Value extends StateResult>(
   >(selector: T): ReturnType<T>;
   function useSelector<T extends (keyof Value)[]>(
     ...keys: T | [(value: Value) => Partial<Value>]
-  ): T | T["length"] extends 0 ? Value : Pick<Value, T[number]> {
+  ): T["length"] extends 0 ? Value : Pick<Value, T[number]> {
     // Function/custom selector: discover which source keys the selector reads
     // via a recording proxy, subscribe to exactly those contexts, then recompute
     // the result from the *live* context values. This keeps derived and renamed
