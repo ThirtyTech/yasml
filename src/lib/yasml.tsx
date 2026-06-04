@@ -2,6 +2,7 @@ import {
   Context,
   createContext,
   useContext,
+  useRef,
   FC,
   PropsWithChildren,
   ReactElement,
@@ -64,6 +65,7 @@ function yasml<Props, Value extends StateResult>(
   };
 
   const Provider: FC<PropsWithChildren<Props>> = ({ children, ...props }) => {
+    const orderRef = useRef<string[]>([]);
     const stateValues = State(props as Props);
     // Validate before using the result anywhere (typeof null === "object", so
     // null must be rejected explicitly).
@@ -73,19 +75,31 @@ function yasml<Props, Value extends StateResult>(
     let element = children as ReactElement;
     _cachedState = { ..._cachedState, ...stateValues };
 
+    // The provider nesting order must be stable across renders, but the sorted
+    // key list rarely changes. Recompute it only when the set of keys changes
+    // instead of re-sorting on every render. A plain comparator is sufficient
+    // (and cheaper than locale-aware collation) since we only need determinism.
+    const keysList = Object.keys(stateValues);
+    if (
+      orderRef.current.length !== keysList.length ||
+      keysList.some((k) => !orderRef.current.includes(k))
+    ) {
+      orderRef.current = [...keysList].sort((a, b) =>
+        a < b ? -1 : a > b ? 1 : 0
+      );
+    }
+
     // Keys are unknown until State() runs, so contexts are discovered on the
     // first render. getOrCreateContext is idempotent, so this is cheap on
     // subsequent renders and shares one creation path with useSelector.
-    Object.keys(stateValues)
-      .sort((a, b) => a.localeCompare(b))
-      .forEach((key) => {
-        const context = getOrCreateContext(key as keyof Value);
-        element = (
-          <context.Provider value={stateValues[key]}>
-            {element}
-          </context.Provider>
-        );
-      });
+    orderRef.current.forEach((key) => {
+      const context = getOrCreateContext(key as keyof Value);
+      element = (
+        <context.Provider value={stateValues[key]}>
+          {element}
+        </context.Provider>
+      );
+    });
 
     return element;
   };
