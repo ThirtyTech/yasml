@@ -31,6 +31,14 @@ function yasml<Props, Value extends StateResult>(
     isDev && _cachedContext.get(State.name)
       ? (_cachedContext.get(State.name) as Map<keyof Value, Context<unknown>>)
       : new Map<keyof Value, Context<unknown>>();
+  // Best-effort snapshot of the most recent state, shared by every Provider
+  // instance of this factory. It is NOT a source of live values — those always
+  // come from useContext. It is only used to (a) seed the dependency-tracking
+  // proxy for function selectors so traversal does not throw, and (b) provide a
+  // dev-only fallback when a provider is missing during hot reload. Because it
+  // never feeds the rendered output in production, the fact that it reflects the
+  // most-recently-rendered instance is harmless. Keys are merged (not replaced)
+  // so a probe sees the union of keys across concurrently mounted providers.
   let _cachedState: Value = {} as Value;
 
   // Lazily create (or fetch) the context for a single state key. Centralising
@@ -58,7 +66,7 @@ function yasml<Props, Value extends StateResult>(
   const Provider: FC<PropsWithChildren<Props>> = ({ children, ...props }) => {
     let element = children as ReactElement;
     const stateValues = State(props as Props);
-    _cachedState = stateValues;
+    _cachedState = { ..._cachedState, ...stateValues };
     if (typeof stateValues !== "object") {
       throw new Error("The state must return an object.");
     }
@@ -135,8 +143,8 @@ function yasml<Props, Value extends StateResult>(
           displayWarning(context.displayName);
         }
 
-        if (value === NO_PROVIDER && key in _cachedState) {
-          // Hot-reload / missing-provider fallback to last known value.
+        if (isDev && value === NO_PROVIDER && key in _cachedState) {
+          // Dev-only hot-reload fallback to last known value.
           live[key] = _cachedState[key];
         } else {
           live[key] = value;
@@ -160,15 +168,15 @@ function yasml<Props, Value extends StateResult>(
       // Always resolve to a real context so useContext is called for every
       // requested key on every render (stable hook order). A bogus key still
       // surfaces via the NO_PROVIDER warning below.
-      const context = getOrCreateContext(key as keyof Value);
+      const context = getOrCreateContext(key);
       const value = useContext(context) as Value[T[number]];
 
       if (isDev && value === NO_PROVIDER) {
         displayWarning(context.displayName);
       }
 
-      if (value === NO_PROVIDER && key in _cachedState) {
-        // Handles condition during hot reload where value is lost
+      if (isDev && value === NO_PROVIDER && key in _cachedState) {
+        // Dev-only hot-reload fallback when the context value is lost
         result[key] = _cachedState[key];
       } else {
         result[key] = value;
