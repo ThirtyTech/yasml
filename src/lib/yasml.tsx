@@ -32,6 +32,29 @@ function yasml<Props, Value extends StateResult>(
       ? (_cachedContext.get(State.name) as Map<keyof Value, Context<unknown>>)
       : new Map<keyof Value, Context<unknown>>();
   let _cachedState: Value = {} as Value;
+
+  // Lazily create (or fetch) the context for a single state key. Centralising
+  // creation here lets useSelector call useContext unconditionally for every
+  // requested key, which keeps the hook order stable across renders even when a
+  // key's context did not exist yet (Rules of Hooks).
+  const getOrCreateContext = (key: keyof Value): Context<unknown> => {
+    let context = contexts.get(key);
+    if (!context) {
+      context = createContext(NO_PROVIDER) as Context<unknown>;
+      context.displayName = String(key);
+      contexts.set(key, context);
+      if (isDev) {
+        const cache = _cachedContext.get(State.name);
+        if (cache) {
+          cache.set(key, context);
+        } else {
+          _cachedContext.set(State.name, new Map([[key, context]]));
+        }
+      }
+    }
+    return context;
+  };
+
   const Provider: FC<PropsWithChildren<Props>> = ({ children, ...props }) => {
     let element = children as ReactElement;
     const stateValues = State(props as Props);
@@ -134,27 +157,25 @@ function yasml<Props, Value extends StateResult>(
     const result = {} as { [key in T[number]]: Value[key] };
 
     contextKeys.forEach((key) => {
-      const context = contexts.get(key as T[number]) as Context<unknown>;
+      // Always resolve to a real context so useContext is called for every
+      // requested key on every render (stable hook order). A bogus key still
+      // surfaces via the NO_PROVIDER warning below.
+      const context = getOrCreateContext(key as keyof Value);
+      const value = useContext(context) as Value[T[number]];
 
-      if (context) {
-        const value = useContext(context) as Value[T[number]];
+      if (isDev && value === NO_PROVIDER) {
+        displayWarning(context.displayName);
+      }
 
-        if (isDev && value === NO_PROVIDER) {
-          displayWarning(context.displayName);
+      if (value === NO_PROVIDER && key in _cachedState) {
+        // Handles condition during hot reload where value is lost
+        result[key] = _cachedState[key];
+      } else {
+        result[key] = value;
+        // Stores last known value from context. Used for not reloading
+        if (isDev && value !== NO_PROVIDER) {
+          _cachedState[key] = value;
         }
-
-        if (value === NO_PROVIDER && key in _cachedState) {
-          // Handles condition during hot reload where value is lost
-          result[key] = _cachedState[key];
-        } else {
-          result[key] = value;
-          // Stores last known value from context. Used for not reloading
-          if (isDev && value !== NO_PROVIDER) {
-            _cachedState[key] = value;
-          }
-        }
-      } else if (typeof key === "string") {
-        displayWarning(key);
       }
     });
 
