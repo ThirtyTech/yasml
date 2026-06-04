@@ -24,14 +24,23 @@ function displayWarning(name: string | undefined) {
   console.warn(warnMessage);
 }
 
-const _cachedContext = new Map<string, Map<unknown, Context<unknown>>>();
+// Dev-only cache so contexts survive hot reloads. Keyed by the State function
+// reference (not its name) to avoid collisions between same-named or anonymous
+// hooks, and so entries can be garbage collected once the factory is gone.
+const _cachedContext = new WeakMap<object, Map<unknown, Context<unknown>>>();
 function yasml<Props, Value extends StateResult>(
   State: (props: Props) => Value
 ) {
-  const contexts =
-    isDev && _cachedContext.get(State.name)
-      ? (_cachedContext.get(State.name) as Map<keyof Value, Context<unknown>>)
-      : new Map<keyof Value, Context<unknown>>();
+  const contexts = (
+    isDev && _cachedContext.has(State)
+      ? _cachedContext.get(State)
+      : new Map<keyof Value, Context<unknown>>()
+  ) as Map<keyof Value, Context<unknown>>;
+  if (isDev) {
+    // Register the live map itself so the Provider and useSelector keep writing
+    // through to the cached instance across hot reloads.
+    _cachedContext.set(State, contexts as Map<unknown, Context<unknown>>);
+  }
   // Best-effort snapshot of the most recent state, shared by every Provider
   // instance of this factory. It is NOT a source of live values — those always
   // come from useContext. It is only used to (a) seed the dependency-tracking
@@ -51,15 +60,9 @@ function yasml<Props, Value extends StateResult>(
     if (!context) {
       context = createContext(NO_PROVIDER) as Context<unknown>;
       context.displayName = String(key);
+      // `contexts` is itself the dev-cached map, so this also persists across
+      // hot reloads without a separate registration step.
       contexts.set(key, context);
-      if (isDev) {
-        const cache = _cachedContext.get(State.name);
-        if (cache) {
-          cache.set(key, context);
-        } else {
-          _cachedContext.set(State.name, new Map([[key, context]]));
-        }
-      }
     }
     return context;
   };
