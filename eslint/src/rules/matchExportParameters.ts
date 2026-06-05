@@ -47,6 +47,21 @@ const rule = ESLintUtils.RuleCreator(
           return;
         }
 
+        // 1b. Never touch a custom/function selector. Its destructured names are
+        //     the selector's *output* keys (often derived or renamed, e.g.
+        //     `counterMultiplier`), not source state keys, so rewriting them into
+        //     string-key arguments subscribes to contexts that never exist and
+        //     renders the missing-provider sentinel. The runtime resolves a
+        //     function selector's real dependencies itself, so leave it intact.
+        const firstArg = node.arguments[0];
+        if (
+          firstArg &&
+          (firstArg.type === "ArrowFunctionExpression" ||
+            firstArg.type === "FunctionExpression")
+        ) {
+          return;
+        }
+
         // 2. Cheap AST gate. A fix is only ever produced when the call is
         //    destructured into an object pattern whose property count differs
         //    from the current argument count. Everything else is a no-op, so
