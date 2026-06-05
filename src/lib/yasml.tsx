@@ -140,7 +140,14 @@ function yasml<Props, Value extends StateResult>(
       // Run once against the cached state purely to record dependencies.
       selector(probe as unknown as Value);
 
-      const live = {} as Value;
+      // Seed `live` with the full cached snapshot so the recompute's returned
+      // closures can reach keys they reference lazily (e.g. a setter used only
+      // inside an `onClick`). The probe only records keys read *synchronously*
+      // during the selector run, so anything accessed later from inside a
+      // returned function would otherwise be missing here and blow up when the
+      // closure fires. Subscribed keys below overwrite these with live context
+      // values; setters are stable, so the snapshot is correct for them.
+      const live = { ..._cachedState };
       readKeys.forEach((key) => {
         const context = contexts.get(key);
         if (!context) return;
