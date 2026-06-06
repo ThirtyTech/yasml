@@ -1,5 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
-  "buildCommand": "next build && pagefind --site out --output-path out/_pagefind"
+  "framework": null,
+  "buildCommand": "next build && pagefind --site .next/server/app --output-path out/_pagefind",
+  "outputDirectory": "out",
+  "cleanUrls": true
 }
