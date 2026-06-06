@@ -12,6 +12,7 @@ export function PropertySelector() {
     <div>
       <h3>Note: Clicking the button will not trigger a re-render. Update sets <code>counterTwo</code> not <code>counterOne</code>.</h3>
       <button
+        data-testid="property-selector-btn"
         onClick={() => {
           console.log("Click");
           update((prev) => prev + 1);
@@ -22,7 +23,7 @@ export function PropertySelector() {
       >
         {counterOne.toString()}
       </button>
-      <ul ref={ulRef}></ul>
+      <ul data-testid="property-selector-results" ref={ulRef}></ul>
     </div>
   );
 }

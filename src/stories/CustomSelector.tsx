@@ -8,9 +8,9 @@ export function CustomSelector() {
   }));
   return <div>
     <div>
-      <button onClick={() => increment()}>Increment</button>
-      <div>Counter: {counter}</div>
-      <div>Counter Multiplier: {counterMultiplier}</div>
+      <button data-testid="increment-btn" onClick={() => increment()}>Increment</button>
+      <div data-testid="counter">Counter: {counter}</div>
+      <div data-testid="counter-multiplier">Counter Multiplier: {counterMultiplier}</div>
     </div>
   </div>;
 }

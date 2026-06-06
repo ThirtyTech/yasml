@@ -13,7 +13,7 @@ export function Basic() {
   });
 
   return <>
-    <button onClick={() => setCounter(prev => prev + 1)}>Basic {counter}</button>
-    <ul ref={ulRef}></ul>
+    <button data-testid="basic-btn" onClick={() => setCounter(prev => prev + 1)}>Basic {counter}</button>
+    <ul data-testid="basic-results" ref={ulRef}></ul>
   </>
 }
