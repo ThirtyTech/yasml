@@ -34,7 +34,6 @@ function displayWarning(name: string | undefined) {
   const warnMessage = name
     ? `The context consumer of ${name} must be wrapped with its corresponding Provider`
     : "Component must be wrapped with Provider.";
-  // eslint-disable-next-line no-console
   console.warn(warnMessage);
 }
 
@@ -86,7 +85,7 @@ const YasmlGlobalHosts: FC = () => {
   const hosts = useSyncExternalStore(
     subscribeGlobalHosts,
     getGlobalHostsSnapshot,
-    getGlobalHostsSnapshot
+    getGlobalHostsSnapshot,
   );
   return (
     <>
@@ -115,7 +114,7 @@ const YasmlRoot: FC<PropsWithChildren> = ({ children }) => (
 const _cachedContext = new WeakMap<object, Map<unknown, Context<unknown>>>();
 function yasml<Props, Value extends StateResult>(
   State: (props: Props) => Value,
-  options: YasmlOptions = {}
+  options: YasmlOptions = {},
 ) {
   const { global: globalEnabled = true } = options;
   const contexts = (
@@ -126,7 +125,7 @@ function yasml<Props, Value extends StateResult>(
   if (isDev) {
     // Register the live map itself so the Provider and useSelector keep writing
     // through to the cached instance across hot reloads.
-    _cachedContext.set(State, contexts as Map<unknown, Context<unknown>>);
+    _cachedContext.set(State, contexts);
   }
   // Best-effort snapshot of the most recent state, shared by every Provider
   // instance of this factory. It is NOT a source of live values — those always
@@ -213,7 +212,7 @@ function yasml<Props, Value extends StateResult>(
     key: keyof Value,
     displayName: string | undefined,
     contextValue: unknown,
-    globalValue: unknown
+    globalValue: unknown,
   ): unknown => {
     // 1. An explicit <Provider> in scope wins for this subtree.
     if (contextValue !== NO_PROVIDER) {
@@ -272,7 +271,7 @@ function yasml<Props, Value extends StateResult>(
       keysList.some((k) => !orderRef.current.includes(k))
     ) {
       orderRef.current = [...keysList].sort((a, b) =>
-        a < b ? -1 : a > b ? 1 : 0
+        a < b ? -1 : a > b ? 1 : 0,
       );
     }
 
@@ -280,11 +279,9 @@ function yasml<Props, Value extends StateResult>(
     // first render. getOrCreateContext is idempotent, so this is cheap on
     // subsequent renders and shares one creation path with useSelector.
     orderRef.current.forEach((key) => {
-      const context = getOrCreateContext(key as keyof Value);
+      const context = getOrCreateContext(key);
       element = (
-        <context.Provider value={stateValues[key]}>
-          {element}
-        </context.Provider>
+        <context.Provider value={stateValues[key]}>{element}</context.Provider>
       );
     });
 
@@ -327,7 +324,7 @@ function yasml<Props, Value extends StateResult>(
     ...keys: T
   ): T["length"] extends 0 ? Value : Pick<Value, T[number]>;
   function useSelector<
-    T extends (value: Value) => Partial<Value> & Record<string, unknown>
+    T extends (value: Value) => Partial<Value> & Record<string, unknown>,
   >(selector: T): ReturnType<T>;
   function useSelector<T extends (keyof Value)[]>(
     ...keys: T | [(value: Value) => Partial<Value>]
@@ -338,19 +335,16 @@ function yasml<Props, Value extends StateResult>(
     // values correct and re-renders the component when the values they depend on
     // change (previously the result was computed once from stale cached state).
     if (typeof keys[0] === "function") {
-      const selector = keys[0] as (value: Value) => Partial<Value>;
+      const selector = keys[0];
       const readKeys = new Set<keyof Value>();
-      const probe = new Proxy(
-        _cachedState as Record<string | symbol, unknown>,
-        {
-          get(target, prop) {
-            readKeys.add(prop as keyof Value);
-            return target[prop];
-          },
-        }
-      );
+      const probe = new Proxy(_cachedState, {
+        get(target, prop) {
+          readKeys.add(prop as keyof Value);
+          return target[prop as keyof Value];
+        },
+      });
       // Run once against the cached state purely to record dependencies.
-      selector(probe as unknown as Value);
+      selector(probe);
 
       // Seed `live` with the full cached snapshot so the recompute's returned
       // closures can reach keys they reference lazily (e.g. a setter used only
@@ -369,13 +363,13 @@ function yasml<Props, Value extends StateResult>(
         const globalValue = useSyncExternalStore(
           store.subscribe(key),
           store.getSnapshot(key),
-          store.getSnapshot(key)
+          store.getSnapshot(key),
         );
         live[key] = resolveKey(
           key,
           context.displayName,
           contextValue,
-          globalValue
+          globalValue,
         ) as Value[keyof Value];
       });
 
@@ -398,13 +392,13 @@ function yasml<Props, Value extends StateResult>(
       const globalValue = useSyncExternalStore(
         store.subscribe(key),
         store.getSnapshot(key),
-        store.getSnapshot(key)
+        store.getSnapshot(key),
       );
       result[key] = resolveKey(
         key,
         context.displayName,
         contextValue,
-        globalValue
+        globalValue,
       ) as Value[T[number]];
     });
 
