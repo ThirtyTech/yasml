@@ -8,7 +8,7 @@ export function Basic() {
 
   useEffect(() => {
     const li = document.createElement('li');
-    li.innerHTML = '[Basic] Rendered ' + new Date().getTime();
+    li.innerHTML = `[Basic] Rendered ${new Date().getTime()}`;
     ulRef.current?.appendChild(li);
   });
 
