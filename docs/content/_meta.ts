@@ -1,4 +1,4 @@
-export default {
+const meta = {
   index: "Home",
   guide: "Common Guide",
   advanced: "Advanced Usages",
@@ -11,3 +11,5 @@ export default {
     href: "https://yasml-storybook.thirtytech.net",
   },
 };
+
+export default meta;

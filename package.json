@@ -35,6 +35,11 @@
     "react": ">=18.0.0 <20.0.0",
     "react-dom": ">=18.0.0 <20.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "zod@>=4.4.0": "~4.3.0"
+    }
+  },
   "devDependencies": {
     "@storybook/addon-docs": "^10.4.2",
     "@storybook/addon-links": "^10.4.2",
