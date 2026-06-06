@@ -1,0 +1,57 @@
+name: Release
+
+# Build, pack, and publish a GitHub Release whenever a version tag is pushed.
+# Packs all three packages and attaches each .tgz to the release for the tag.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # required to create the release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Order matters: eslint-plugin is built before codegen (vite-plugin),
+      # since codegen peer-depends on it. Root (@thirtytech/yasml) is last.
+      - name: Build and pack all packages
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          for dir in eslint codegen .; do
+            echo "==> building & packing $dir"
+            (
+              cd "$dir"
+              pnpm run build
+              pnpm pack --pack-destination "$GITHUB_WORKSPACE/artifacts"
+            )
+          done
+          ls -l "$GITHUB_WORKSPACE/artifacts"
+
+      - name: Create release and attach packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "$GITHUB_WORKSPACE"/artifacts/*.tgz \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
