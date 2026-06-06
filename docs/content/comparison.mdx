@@ -1,0 +1,235 @@
+# YASML vs Jotai, Zustand & TanStack Store
+
+This page is an honest, side-by-side look at where YASML fits among the popular
+React state libraries. The goal isn't to declare a winner — each of these tools
+is excellent at what it was designed for. It's to help you understand the
+trade-offs so you can pick the right one for a given piece of state.
+
+> **TL;DR** — YASML's bet is that *your state is just a React hook*. You write
+> `useState` / `useReducer` / `useEffect` and custom hooks exactly as you would
+> locally, then "lift" them with a factory that gives you per-property render
+> isolation and an optional provider-less global. The other three libraries each
+> introduce their own state primitive (atoms, an external store) that lives
+> *outside* the React render model. That single difference drives almost every
+> pro and con below.
+
+## How YASML works (the 30-second recap)
+
+```typescript copy
+function CounterState({ initialCount = 0 }) {
+  const [count, setCount] = useState(initialCount);
+  const increment = useCallback(() => setCount((c) => c + 1), []);
+  return { count, increment };
+}
+
+const { Provider, useSelector } = yasml(CounterState);
+```
+
+- Your state is an ordinary custom hook that returns an object.
+- `yasml()` puts **each returned property into its own React Context**. A
+  component that asks for `useSelector("count")` subscribes to *only* the `count`
+  context, so it re-renders only when `count` changes.
+- `useSelector()` (no args) returns everything; `useSelector("a", "b")` isolates;
+  `useSelector(s => ({ ... }))` runs a recording proxy to track exactly which
+  keys you read and recomputes derived values from live state.
+- An optional [`<YasmlRoot>`](/global-provider) mounts a hidden sibling **Host**
+  per factory so `useSelector` works with **no `Provider` at all**, while an
+  explicit `Provider` still wins for its subtree.
+- The [ESLint rule](/eslint) and [Vite codegen plugin](/codegen) fill in the
+  `useSelector` key arguments for you, so you get render isolation without ever
+  writing a selector by hand.
+
+Everything else on this page is a comparison against that model.
+
+## At a glance
+
+| Dimension | **YASML** | **Jotai** | **Zustand** | **TanStack Store** |
+|---|---|---|---|---|
+| Core primitive | A custom hook returning an object | Atoms (`atom()`) | One external store (`create`) | Framework-agnostic `Store` / `Derived` |
+| Mental model | "It's just React hooks" | Bottom-up atomic graph | Flux-ish single store | Low-level reactive primitive |
+| Framework | React only | React (+ React-likes) | React core + vanilla | Truly framework-agnostic (React/Vue/Solid/Angular/Svelte) |
+| Use outside React | ✗ (lives in the tree) | Partial (`store.get/set`) | ✓ first-class (`getState`/`setState`/`subscribe`) | ✓ (that's the whole point) |
+| Render isolation | Per-property Context; **automatic** via codegen/eslint | Automatic, fine-grained dependency tracking | Manual via selectors (`useShallow` for objects) | Manual via selectors |
+| Multiple isolated instances | ✓ Idiomatic (it's Context) | ✓ via `<Provider store>` | Extra wiring (`createStore` + context) | Manual wiring |
+| Props-seeded instances | ✓ Natural (`<Provider initialX>`) | via hydrate/initial values | Awkward | Manual |
+| Derived state | Inline in a selector (recomputed per consumer) | First-class cached `derived atom` | Selector / external libs | First-class cached `Derived` |
+| Async / Suspense | Use normal hooks (e.g. React Query) inside | First-class async atoms + Suspense | `async` actions | Manual |
+| Side effects / lifecycle | `useEffect` etc. inside the hook (native) | `atomEffect`/observe utilities | `subscribe` / outside store | `Effect` primitive |
+| TypeScript | End-to-end, go-to-def, no string keys | Strong, atom-typed | Strong (needs `create<T>()`) | Strong, TS-first |
+| Ecosystem / middleware | Small (ESLint + codegen plugins) | Large (query, immer, xstate, storage…) | Very large (persist, devtools, immer…) | Small (it's a primitive) |
+| Maturity / adoption | Niche | Mainstream | Very mainstream, battle-tested | Newer; mostly an internal engine |
+| Approx. gzip size* | ~2–3 kB | ~3–4 kB (core ~2 kB) | ~1–1.5 kB | ~2 kB (+ adapter) |
+
+<sub>*Bundle sizes are approximate and depend on version and tree-shaking —
+check [bundlephobia.com](https://bundlephobia.com) for exact current numbers.</sub>
+
+---
+
+## YASML vs Jotai
+
+**Jotai's model.** State is built bottom-up out of *atoms*. You create primitive
+atoms and compose *derived atoms* on top of them; components read with
+`useAtomValue` / write with `useSetAtom`. Re-renders are isolated *automatically*
+through dependency tracking — a component re-renders only for the atoms it
+actually reads, with no selectors required. There's a provider-less default store
+(conceptually similar to `YasmlRoot`), and `<Provider>` is used for isolation,
+initialization, and reset.
+
+```typescript copy
+const countAtom = atom(0);
+const doubleAtom = atom((get) => get(countAtom) * 2); // cached, shared
+```
+
+**Where Jotai wins over YASML**
+
+- **Fine-grained reactivity for free.** Jotai isolates renders without you naming
+  keys *or* needing a build plugin. YASML matches this only once you add the
+  codegen/eslint tooling (or write selector args by hand).
+- **Cached, shared derived state.** A derived atom computes once and is shared by
+  every consumer. YASML's selector-derived values are recomputed in each
+  component that asks for them.
+- **First-class async & Suspense.** Async atoms integrate with Suspense and error
+  boundaries directly. YASML has no async primitive — you'd compose a data hook
+  (React Query, etc.) inside your state instead.
+- **Bigger ecosystem.** Official integrations for React Query, Immer, XState,
+  storage/persistence, and SSR utilities.
+
+**Where YASML wins over Jotai**
+
+- **No new mental model.** Your team already knows `useState`/`useReducer`/
+  `useEffect`. YASML state *is* that. Jotai asks you to think in an atom graph and
+  to organize, name, and import atoms — a real discipline in a large app.
+- **Logic stays cohesive.** A YASML state hook reads top-to-bottom like a
+  component. Jotai logic tends to spread across many atom and write-atom
+  definitions.
+- **Lifecycle is native.** Effects, subscriptions, refs, and other hooks live
+  right inside your state hook. In Jotai, side effects need `atomEffect`/observe
+  patterns.
+- **Type ergonomics by construction.** Ask the state for a property and you get
+  go-to-definition / find-all-references with zero indirection. There are no atom
+  references to import and wire up.
+
+**Pick Jotai when** your state is a web of fine-grained, interdependent derived
+and async values and you want maximal render granularity out of the box. **Pick
+YASML when** you'd rather write a normal hook and lift it, and you value the
+plain-React mental model and cohesive logic.
+
+---
+
+## YASML vs Zustand
+
+**Zustand's model.** You create a single external store with
+`create((set, get) => ({ ...state, ...actions }))` and read it with a hook that
+takes a selector: `useStore(s => s.count)`. The store is a module-level singleton
+— **no Provider needed** — and is also usable *outside* React via `getState`,
+`setState`, and `subscribe`. Render isolation comes from your selector plus an
+equality check (`===` by default, `useShallow` for objects/arrays).
+
+```typescript copy
+const useStore = create((set) => ({
+  count: 0,
+  increment: () => set((s) => ({ count: s.count + 1 })),
+}));
+```
+
+**Where Zustand wins over YASML**
+
+- **Works outside React.** This is the big one. You can read and write the store
+  from anywhere — event handlers, websockets, tests, other libraries — with
+  `getState()`/`setState()`. YASML state lives in the React tree and has no
+  equivalent escape hatch.
+- **Transient updates & subscriptions.** `subscribe`/`subscribeWithSelector` let
+  you react to changes *without* re-rendering — great for high-frequency state.
+- **Mature middleware & tooling.** `persist`, `devtools` (Redux DevTools),
+  `immer`, and a huge battle-tested community. Known-correct handling of zombie
+  children, concurrency, and cross-renderer context loss.
+
+**Where YASML wins over Zustand**
+
+- **Multiple isolated instances are trivial.** Because YASML is Context, dropping
+  a second `<Provider>` gives you a fully independent copy — perfect for
+  "one instance per list item / per modal / per tenant." In Zustand the default
+  store is a global singleton; per-subtree instances require `createStore` + a
+  React context + a provider you wire up yourself.
+- **Props-seeded state.** `<Provider initialCount={10}>` flows straight into your
+  hook. Configuring a Zustand store from React props is comparatively awkward.
+- **Compose React hooks inside.** Need `useEffect`, a `ref`, or another custom
+  hook as part of this state? Just write it. A Zustand store isn't a component,
+  so side effects live outside it or behind `subscribe`.
+- **Per-property isolation without writing selectors.** With the codegen/eslint
+  plugin you get isolation automatically. Zustand always requires you to write a
+  correct selector (and remember `useShallow` for object selections).
+
+**Pick Zustand when** you need a global, app-wide store that's also reachable
+from non-React code, with mature persistence/devtools and transient updates.
+**Pick YASML when** your state is naturally *scoped to a part of the tree*, is
+seeded from props, or wants to be expressed as a normal React hook with effects.
+
+---
+
+## YASML vs TanStack Store
+
+**TanStack Store's model.** A small, immutable, reactive primitive — `Store`,
+`Derived`, and `Effect` — that is **framework-agnostic**, with adapters for
+React, Vue, Solid, Angular, and Svelte. It powers the internals of TanStack Form
+and others. In React you read via `useStore(store, selector)` with selector-based
+isolation and `batch()` for grouped updates.
+
+```typescript copy
+const countStore = new Store(0);
+const doubled = new Derived({ deps: [countStore], fn: () => countStore.state * 2 });
+countStore.setState((c) => c + 1);
+```
+
+**Where TanStack Store wins over YASML**
+
+- **Framework-agnostic.** The same store works in Vue/Solid/Angular/Svelte. YASML
+  is React-only and tied to the React tree. If you need shared state logic across
+  frameworks (or a design system that isn't React-exclusive), this matters.
+- **Cached derived + explicit effects.** `Derived` is computed/cached and `Effect`
+  is a first-class side-effect primitive, with `batch()` for coalescing updates.
+- **Lives outside the component tree.** Like Zustand, the store is a standalone
+  object you can manipulate from anywhere.
+
+**Where YASML wins over TanStack Store**
+
+- **Batteries vs. building blocks.** TanStack Store is intentionally a *low-level
+  primitive* — you assemble your own patterns and React wiring on top. YASML is
+  an opinionated, app-ready story: factory in, `{ Provider, useSelector }` out.
+- **React-native ergonomics.** Writing a hook and lifting it is far closer to how
+  React developers already think than instantiating store/derived/effect objects
+  and threading them through adapters.
+- **Tree-scoped instances and props.** Same Context advantages as above —
+  per-subtree instances and props-seeding are first-class; in TanStack Store you
+  wire that up manually.
+- **Maturity for app state.** TanStack Store is newer and best known as an
+  *internal engine* for other TanStack libraries; its standalone app-state
+  community and documentation are thinner than the others'.
+
+**Pick TanStack Store when** you need framework-agnostic state, are already deep
+in the TanStack ecosystem, or want a low-level reactive primitive to build on.
+**Pick YASML when** you're building a React app and want an opinionated,
+hooks-shaped abstraction rather than a primitive to assemble.
+
+---
+
+## A quick decision guide
+
+- **"I want my state to read like a normal React hook, scoped to part of my tree,
+  seeded from props."** → **YASML**.
+- **"I want maximal fine-grained reactivity and cached/async derived values out of
+  the box."** → **Jotai**.
+- **"I want one global store I can also touch from outside React, with mature
+  persistence and devtools."** → **Zustand**.
+- **"I need framework-agnostic state, or a low-level reactive primitive to build
+  on."** → **TanStack Store**.
+
+These aren't mutually exclusive — it's common to reach for Zustand or React Query
+for global/server state while using YASML (or Jotai) for scoped UI state.
+
+## Sources
+
+- [Jotai — Introduction](https://jotai.org/docs/introduction) and
+  [Provider / default store](https://jotai.org/docs/core/provider)
+- [Zustand — README & docs](https://github.com/pmndrs/zustand)
+- [TanStack Store — Overview](https://tanstack.com/store/latest/docs/overview),

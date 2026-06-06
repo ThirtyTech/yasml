@@ -5,6 +5,7 @@ const meta = {
   "global-provider": "Global Provider",
   eslint: "ESLint",
   codegen: "CodeGen with Vite",
+  comparison: "vs Jotai / Zustand / TanStack",
   storybook: {
     title: "Storybook",
     type: "page",
