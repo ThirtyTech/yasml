@@ -2,7 +2,9 @@ import {
   Context,
   createContext,
   useContext,
+  useLayoutEffect,
   useRef,
+  useSyncExternalStore,
   FC,
   PropsWithChildren,
   ReactElement,
@@ -12,9 +14,21 @@ const isDev = process.env.NODE_ENV !== "production";
 
 const NO_PROVIDER = {};
 
+// Distinct from NO_PROVIDER: marks a key the global store has never published,
+// so useSelector can tell "no global Host value yet" apart from "no Provider".
+const UNSET = {};
+
 type StateResult = {
   [key: string]: unknown;
 } & object;
+
+type YasmlOptions = {
+  // When false, this factory does NOT register a global Host with <YasmlRoot>.
+  // Consumers then require an explicit <Provider> (the pre-global behavior), and
+  // no global instance is mounted — use this for containers you always provide
+  // explicitly (e.g. ones with side-effecting effects or required props).
+  global?: boolean;
+};
 
 function displayWarning(name: string | undefined) {
   const warnMessage = name
@@ -24,13 +38,86 @@ function displayWarning(name: string | undefined) {
   console.warn(warnMessage);
 }
 
+// ---------------------------------------------------------------------------
+// Global (provider-less) Host registry.
+//
+// A factory that opts into a global default registers a Host here. <YasmlRoot>
+// renders these Hosts as SIBLINGS of your app — never ancestors. That matters:
+// React cannot reparent, so if the global instances were nested *around* the
+// app, a factory registering late (e.g. when a code-split chunk loads) would
+// force a new wrapper into the chain and remount the whole app. As siblings,
+// a late registration just mounts one more Host next to the app, leaving the
+// app's tree untouched. Each Host runs its State() and publishes values into
+// that factory's store; consumers read the store as a fallback (see below).
+// ---------------------------------------------------------------------------
+type GlobalHost = { id: number; Host: FC };
+let _nextHostId = 0;
+const _globalHosts: GlobalHost[] = [];
+const _globalHostListeners = new Set<() => void>();
+// Cached snapshot for useSyncExternalStore: a stable reference until the set of
+// hosts changes (required so getSnapshot does not loop).
+let _globalHostsSnapshot: GlobalHost[] = _globalHosts;
+// Dedupe registration by State reference so a module imported twice (or a
+// factory shared across entry points) contributes a single Host.
+const _registeredStates = new WeakSet<object>();
+
+function registerGlobalHost(State: object, Host: FC) {
+  if (_registeredStates.has(State)) return;
+  _registeredStates.add(State);
+  _globalHosts.push({ id: _nextHostId++, Host });
+  _globalHostsSnapshot = _globalHosts.slice();
+  _globalHostListeners.forEach((listener) => listener());
+}
+
+function subscribeGlobalHosts(listener: () => void) {
+  _globalHostListeners.add(listener);
+  return () => {
+    _globalHostListeners.delete(listener);
+  };
+}
+
+function getGlobalHostsSnapshot() {
+  return _globalHostsSnapshot;
+}
+
+const YasmlGlobalHosts: FC = () => {
+  // Subscribing here is what makes code-splitting work: when a lazy chunk loads
+  // and its factory registers a Host, this component re-renders and mounts it.
+  const hosts = useSyncExternalStore(
+    subscribeGlobalHosts,
+    getGlobalHostsSnapshot,
+    getGlobalHostsSnapshot
+  );
+  return (
+    <>
+      {hosts.map(({ id, Host }) => (
+        <Host key={id} />
+      ))}
+    </>
+  );
+};
+
+// Mount once at your app root. Every factory created with `global` left on gets
+// a default instance via the sibling Hosts above; an explicit <Provider> deeper
+// in the tree still wins for its subtree (see useSelector resolution). Exposed
+// as a property of the default export (`yasml.YasmlRoot`) to keep the package's
+// single callable default export intact for CommonJS/UMD consumers.
+const YasmlRoot: FC<PropsWithChildren> = ({ children }) => (
+  <>
+    <YasmlGlobalHosts />
+    {children}
+  </>
+);
+
 // Dev-only cache so contexts survive hot reloads. Keyed by the State function
 // reference (not its name) to avoid collisions between same-named or anonymous
 // hooks, and so entries can be garbage collected once the factory is gone.
 const _cachedContext = new WeakMap<object, Map<unknown, Context<unknown>>>();
 function yasml<Props, Value extends StateResult>(
-  State: (props: Props) => Value
+  State: (props: Props) => Value,
+  options: YasmlOptions = {}
 ) {
+  const { global: globalEnabled = true } = options;
   const contexts = (
     isDev && _cachedContext.has(State)
       ? _cachedContext.get(State)
@@ -50,6 +137,103 @@ function yasml<Props, Value extends StateResult>(
   // most-recently-rendered instance is harmless. Keys are merged (not replaced)
   // so a probe sees the union of keys across concurrently mounted providers.
   let _cachedState: Value = {} as Value;
+
+  // Per-factory store backing the global (provider-less) fallback. The global
+  // Host runs State() and publishes each key here; useSelector reads it via
+  // useSyncExternalStore when no explicit Provider is in scope. Notifications
+  // are per-key, so the global path keeps the same re-render isolation that the
+  // per-key contexts give the explicit-Provider path.
+  const store = (() => {
+    const values = new Map<keyof Value, unknown>();
+    const lastNotified = new Map<keyof Value, unknown>();
+    const listeners = new Map<keyof Value, Set<() => void>>();
+    // Per-key subscribe/getSnapshot functions are memoized so their identity is
+    // stable across renders (useSyncExternalStore re-subscribes if it changes).
+    const subscribers = new Map<keyof Value, (cb: () => void) => () => void>();
+    const snapshots = new Map<keyof Value, () => unknown>();
+
+    const listenersFor = (key: keyof Value) => {
+      let set = listeners.get(key);
+      if (!set) {
+        set = new Set();
+        listeners.set(key, set);
+      }
+      return set;
+    };
+
+    return {
+      // Render phase: keep getSnapshot fresh so a consumer rendering after the
+      // Host in the same pass reads real values (the Host is the first sibling
+      // under YasmlRoot, so it renders before the app). Does NOT notify.
+      seed(next: Value) {
+        (Object.keys(next) as (keyof Value)[]).forEach((key) => {
+          values.set(key, next[key]);
+        });
+      },
+      // Commit phase: notify subscribers of keys whose value actually changed.
+      // Compared against lastNotified (not values) so a render-phase seed cannot
+      // hide a real change from the diff.
+      flush(next: Value) {
+        (Object.keys(next) as (keyof Value)[]).forEach((key) => {
+          const value = next[key];
+          if (!Object.is(lastNotified.get(key), value)) {
+            lastNotified.set(key, value);
+            values.set(key, value);
+            listenersFor(key).forEach((cb) => cb());
+          }
+        });
+      },
+      subscribe(key: keyof Value) {
+        let fn = subscribers.get(key);
+        if (!fn) {
+          fn = (cb: () => void) => {
+            const set = listenersFor(key);
+            set.add(cb);
+            return () => set.delete(cb);
+          };
+          subscribers.set(key, fn);
+        }
+        return fn;
+      },
+      getSnapshot(key: keyof Value) {
+        let fn = snapshots.get(key);
+        if (!fn) {
+          fn = () => (values.has(key) ? values.get(key) : UNSET);
+          snapshots.set(key, fn);
+        }
+        return fn;
+      },
+    };
+  })();
+
+  // Resolve a single key from its explicit context value and its global store
+  // value, applying precedence: an explicit <Provider> always wins; otherwise
+  // fall back to the global Host; otherwise warn / dev hot-reload fallback.
+  const resolveKey = (
+    key: keyof Value,
+    displayName: string | undefined,
+    contextValue: unknown,
+    globalValue: unknown
+  ): unknown => {
+    // 1. An explicit <Provider> in scope wins for this subtree.
+    if (contextValue !== NO_PROVIDER) {
+      if (isDev) _cachedState[key] = contextValue as Value[keyof Value];
+      return contextValue;
+    }
+    // 2. No explicit Provider: fall back to the global Host's value.
+    if (globalEnabled && globalValue !== UNSET) {
+      return globalValue;
+    }
+    // 3. Nothing in scope. Only warn when no global Host could ever satisfy this
+    //    key (global opted out) — otherwise the Host just hasn't published yet.
+    if (isDev && !globalEnabled) {
+      displayWarning(displayName);
+    }
+    if (isDev && key in _cachedState) {
+      return _cachedState[key];
+    }
+    return contextValue; // NO_PROVIDER sentinel, preserving prior behavior
+  };
 
   // Lazily create (or fetch) the context for a single state key. Centralising
   // creation here lets useSelector call useContext unconditionally for every
@@ -111,6 +295,34 @@ function yasml<Props, Value extends StateResult>(
     Provider.displayName = State.name;
   }
 
+  // The global default instance. Mounted (as a sibling of your app) by
+  // <YasmlRoot> for every factory that opted in. It runs State() with default
+  // props and publishes the result into `store`; it renders nothing.
+  const Host: FC = () => {
+    const stateValues = State({} as Props);
+    if (stateValues === null || typeof stateValues !== "object") {
+      throw new Error("The state must return an object.");
+    }
+    // Keep the dev snapshot / function-selector probe seeded even when only the
+    // global Host (no explicit Provider) is mounted.
+    _cachedState = { ..._cachedState, ...stateValues };
+    // Seed synchronously (no notify) so consumers rendering after the Host in
+    // the same pass read real values; commit/notify happens below.
+    store.seed(stateValues);
+    useLayoutEffect(() => {
+      store.flush(stateValues);
+    });
+    return null;
+  };
+
+  if (isDev && State.name) {
+    Host.displayName = `${State.name}.Host`;
+  }
+
+  if (globalEnabled) {
+    registerGlobalHost(State, Host);
+  }
+
   function useSelector<T extends (keyof Value)[]>(
     ...keys: T
   ): T["length"] extends 0 ? Value : Pick<Value, T[number]>;
@@ -149,23 +361,22 @@ function yasml<Props, Value extends StateResult>(
       // values; setters are stable, so the snapshot is correct for them.
       const live = { ..._cachedState };
       readKeys.forEach((key) => {
-        const context = contexts.get(key);
-        if (!context) return;
-        const value = useContext(context) as Value[keyof Value];
-
-        if (isDev && value === NO_PROVIDER) {
-          displayWarning(context.displayName);
-        }
-
-        if (isDev && value === NO_PROVIDER && key in _cachedState) {
-          // Dev-only hot-reload fallback to last known value.
-          live[key] = _cachedState[key];
-        } else {
-          live[key] = value;
-          if (isDev && value !== NO_PROVIDER) {
-            _cachedState[key] = value;
-          }
-        }
+        // Subscribe to both the explicit context and the global store for every
+        // read key (unconditionally, for stable hook order); resolveKey applies
+        // precedence between them.
+        const context = getOrCreateContext(key);
+        const contextValue = useContext(context);
+        const globalValue = useSyncExternalStore(
+          store.subscribe(key),
+          store.getSnapshot(key),
+          store.getSnapshot(key)
+        );
+        live[key] = resolveKey(
+          key,
+          context.displayName,
+          contextValue,
+          globalValue
+        ) as Value[keyof Value];
       });
 
       // Recompute from the live values so derived/renamed results are correct.
@@ -180,25 +391,21 @@ function yasml<Props, Value extends StateResult>(
 
     contextKeys.forEach((key) => {
       // Always resolve to a real context so useContext is called for every
-      // requested key on every render (stable hook order). A bogus key still
-      // surfaces via the NO_PROVIDER warning below.
+      // requested key on every render (stable hook order). The global store is
+      // read alongside it as the provider-less fallback; resolveKey picks.
       const context = getOrCreateContext(key);
-      const value = useContext(context) as Value[T[number]];
-
-      if (isDev && value === NO_PROVIDER) {
-        displayWarning(context.displayName);
-      }
-
-      if (isDev && value === NO_PROVIDER && key in _cachedState) {
-        // Dev-only hot-reload fallback when the context value is lost
-        result[key] = _cachedState[key];
-      } else {
-        result[key] = value;
-        // Stores last known value from context. Used for not reloading
-        if (isDev && value !== NO_PROVIDER) {
-          _cachedState[key] = value;
-        }
-      }
+      const contextValue = useContext(context);
+      const globalValue = useSyncExternalStore(
+        store.subscribe(key),
+        store.getSnapshot(key),
+        store.getSnapshot(key)
+      );
+      result[key] = resolveKey(
+        key,
+        context.displayName,
+        contextValue,
+        globalValue
+      ) as Value[T[number]];
     });
 
     return result;
@@ -210,4 +417,4 @@ function yasml<Props, Value extends StateResult>(
   };
 }
 
-export default yasml;
+export default Object.assign(yasml, { YasmlRoot });
