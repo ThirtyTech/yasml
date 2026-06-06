@@ -2,6 +2,7 @@ export default {
   index: "Home",
   guide: "Common Guide",
   advanced: "Advanced Usages",
+  "global-provider": "Global Provider",
   eslint: "ESLint",
   codegen: "CodeGen with Vite",
   storybook: {
