@@ -24,7 +24,7 @@ function App() {
               <img src={reactLogo} className="logo react" alt="React logo" />
             </a>
           </div>
-          <h1 onClick={() => setVersion((v) => (v += 1))}>
+          <h1 onClick={() => setVersion((v) => v + 1)}>
             Vite + Yasml + React
           </h1>
           <CounterCustom />
