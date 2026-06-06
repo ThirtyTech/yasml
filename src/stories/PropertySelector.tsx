@@ -17,7 +17,6 @@ export function PropertySelector({ step = 1, onUpdate }: PropertySelectorProps) 
   console.log("Initial Render. Will not render on click");
   return (
     <div>
-      <h3>Note: Clicking the button will not trigger a re-render. Update sets <code>counterTwo</code> not <code>counterOne</code>.</h3>
       <button
         data-testid="property-selector-btn"
         onClick={() => {
