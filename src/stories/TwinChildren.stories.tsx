@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { within, userEvent, expect } from "storybook/test";
+import { within, userEvent, expect, fn } from "storybook/test";
 import { Provider } from "./Context/SimpleSharedCounterState";
 import { TwinChildren } from "./TwinChildren";
 import code from './TwinChildren?raw'
@@ -23,13 +23,23 @@ const meta: Meta<typeof TwinChildren> = {
     ),
   ],
   tags: ["autodocs"],
+  args: {
+    label: "Basic",
+    step: 1,
+    onChange: fn(),
+  },
+  argTypes: {
+    label: { control: "text" },
+    step: { control: { type: "number", min: 1 } },
+    onChange: { table: { category: "Events" } },
+  },
 };
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const buttons = canvas.getAllByTestId("basic-btn");
     expect(buttons).toHaveLength(2);
@@ -44,5 +54,8 @@ export const Primary: Story = {
     await userEvent.click(buttons[1]);
     expect(buttons[0]).toHaveTextContent("Basic 2");
     expect(buttons[1]).toHaveTextContent("Basic 2");
+    // Both twins share one onChange arg, fired once per click with the new value.
+    expect(args.onChange).toHaveBeenCalledTimes(2);
+    expect(args.onChange).toHaveBeenLastCalledWith(2);
   },
 };

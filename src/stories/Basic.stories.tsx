@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { within, userEvent, expect } from "storybook/test";
+import { within, userEvent, expect, fn } from "storybook/test";
 import { Basic } from "./Basic";
 import code from "./Basic?raw";
 import { Provider } from "./Context/SimpleSharedCounterState";
@@ -22,13 +22,23 @@ const meta: Meta<typeof Basic> = {
     ),
   ],
   tags: ["autodocs"],
+  args: {
+    label: "Basic",
+    step: 1,
+    onChange: fn(),
+  },
+  argTypes: {
+    label: { control: "text" },
+    step: { control: { type: "number", min: 1 } },
+    onChange: { table: { category: "Events" } },
+  },
 };
 
 export default meta;
 type Story = StoryObj<typeof Basic>;
 
 export const Primary: Story = {
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const button = canvas.getByTestId("basic-btn");
     // Mounts once, so the effect has logged a single render.
@@ -41,5 +51,8 @@ export const Primary: Story = {
     await userEvent.click(button);
     expect(button).toHaveTextContent("Basic 2");
     expect(canvas.getByTestId("basic-results").children).toHaveLength(3);
+    // The onChange arg is spied with fn(), so it shows in Actions and is assertable.
+    expect(args.onChange).toHaveBeenCalledTimes(2);
+    expect(args.onChange).toHaveBeenLastCalledWith(2);
   },
 };

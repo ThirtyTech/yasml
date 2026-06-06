@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { within, userEvent, expect } from "storybook/test";
+import { within, userEvent, expect, fn } from "storybook/test";
 import { Provider } from "./Context/SimpleSharedCounterState";
 import { CustomSelector } from "./CustomSelector";
 import code from "./CustomSelector?raw";
@@ -22,13 +22,23 @@ const meta: Meta<typeof CustomSelector> = {
     ),
   ],
   tags: ["autodocs"],
+  args: {
+    label: "Increment",
+    multiplier: 2,
+    onIncrement: fn(),
+  },
+  argTypes: {
+    label: { control: "text" },
+    multiplier: { control: { type: "number", min: 1 } },
+    onIncrement: { table: { category: "Events" } },
+  },
 };
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     expect(canvas.getByTestId("counter")).toHaveTextContent("Counter: 0");
     expect(canvas.getByTestId("counter-multiplier")).toHaveTextContent(
@@ -45,5 +55,8 @@ export const Primary: Story = {
     expect(canvas.getByTestId("counter-multiplier")).toHaveTextContent(
       "Counter Multiplier: $4.00",
     );
+    // onIncrement is spied with fn(), so it shows in Actions and is assertable.
+    expect(args.onIncrement).toHaveBeenCalledTimes(2);
+    expect(args.onIncrement).toHaveBeenLastCalledWith(2);
   },
 };
