@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "postbuild": "pagefind --site .next/server/app --output-path out/_pagefind",
+    "build": "next build && pagefind --site out --output-path out/_pagefind",
     "start": "next start",
     "lint": "eslint ."
   },
