@@ -1,9 +1,17 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import {
+  Title,
+  Description,
+  Primary as PrimaryBlock,
+  Controls,
+  Source,
+} from "@storybook/addon-docs/blocks";
 import { within, userEvent, expect, fn } from "storybook/test";
 import { Provider } from "./Context/SimpleSharedCounterState";
 import { TwinChildren } from "./TwinChildren";
 import code from './TwinChildren?raw'
 import basic from './Basic?raw'
+import stateCode from "./Context/SimpleSharedCounterState?raw";
 import { Callout } from "./utils/Callout";
 
 const meta: Meta<typeof TwinChildren> = {
@@ -14,6 +22,20 @@ const meta: Meta<typeof TwinChildren> = {
       source: {
         code: `${basic}\n\n${code}`,
       },
+      page: () => (
+        <>
+          <Title />
+          <Description />
+          <PrimaryBlock />
+          <Controls />
+          <h3>TwinChildren.tsx</h3>
+          <Source code={code} language="tsx" />
+          <h3>Basic.tsx</h3>
+          <Source code={basic} language="tsx" />
+          <h3>SimpleSharedCounterState.ts</h3>
+          <Source code={stateCode} language="tsx" />
+        </>
+      ),
     },
   },
   decorators: [

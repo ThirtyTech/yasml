@@ -1,8 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import {
+  Title,
+  Description,
+  Primary as PrimaryBlock,
+  Controls,
+  Source,
+} from "@storybook/addon-docs/blocks";
 import { Provider } from "./Context/MultiCounterSharedState";
 import { within, userEvent, expect, fn } from "storybook/test";
 import { PropertySelector } from "./PropertySelector";
 import code from "./PropertySelector?raw";
+import stateCode from "./Context/MultiCounterSharedState?raw";
 import { Callout } from "./utils/Callout";
 
 const meta: Meta<typeof PropertySelector> = {
@@ -13,6 +21,18 @@ const meta: Meta<typeof PropertySelector> = {
       source: {
         code,
       },
+      page: () => (
+        <>
+          <Title />
+          <Description />
+          <PrimaryBlock />
+          <Controls />
+          <h3>PropertySelector.tsx</h3>
+          <Source code={code} language="tsx" />
+          <h3>MultiCounterSharedState.ts</h3>
+          <Source code={stateCode} language="tsx" />
+        </>
+      ),
     },
   },
   decorators: [

@@ -1,9 +1,17 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import {
+  Title,
+  Description,
+  Primary as PrimaryBlock,
+  Controls,
+  Source,
+} from "@storybook/addon-docs/blocks";
 import { Provider } from "./Context/MultiCounterSharedState";
 import { within, userEvent, expect } from "storybook/test";
 import { UniqueChildren } from "./UniqueChildren";
 import code from "./UniqueChildren?raw";
 import basicCode from "./Basic?raw";
+import stateCode from "./Context/MultiCounterSharedState?raw";
 import { Callout } from "./utils/Callout";
 
 const meta = {
@@ -14,6 +22,20 @@ const meta = {
       source: {
         code: `${basicCode}\n\n${code}`,
       },
+      page: () => (
+        <>
+          <Title />
+          <Description />
+          <PrimaryBlock />
+          <Controls />
+          <h3>Basic.tsx</h3>
+          <Source code={basicCode} language="tsx" />
+          <h3>UniqueChildren.tsx</h3>
+          <Source code={code} language="tsx" />
+          <h3>MultiCounterSharedState.ts</h3>
+          <Source code={stateCode} language="tsx" />
+        </>
+      ),
     },
   },
   decorators: [
@@ -27,7 +49,7 @@ const meta = {
             goes to 2 while Child Two stays at 1), then clicks Child Two.
           </p>
           <p>
-            This example shows the standard use case yasml. One shared state
+            This example shows the standard use case of yasml. One shared state
             object but isolated rendering.
           </p>
         </Callout>

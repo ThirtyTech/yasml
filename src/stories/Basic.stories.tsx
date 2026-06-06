@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import {
+  Title,
+  Description,
+  Primary as PrimaryBlock,
+  Controls,
+  Source,
+} from "@storybook/addon-docs/blocks";
 import { within, userEvent, expect, fn } from "storybook/test";
 import { Basic } from "./Basic";
 import code from "./Basic?raw";
+import stateCode from "./Context/SimpleSharedCounterState?raw";
 import { Provider } from "./Context/SimpleSharedCounterState";
 import { Callout } from "./utils/Callout";
 
@@ -13,6 +21,18 @@ const meta: Meta<typeof Basic> = {
       source: {
         code,
       },
+      page: () => (
+        <>
+          <Title />
+          <Description />
+          <PrimaryBlock />
+          <Controls />
+          <h3>Basic.tsx</h3>
+          <Source code={code} language="tsx" />
+          <h3>SimpleSharedCounterState.ts</h3>
+          <Source code={stateCode} language="tsx" />
+        </>
+      ),
     },
   },
   decorators: [

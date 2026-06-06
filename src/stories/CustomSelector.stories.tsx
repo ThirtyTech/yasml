@@ -1,8 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import {
+  Title,
+  Description,
+  Primary as PrimaryBlock,
+  Controls,
+  Source,
+} from "@storybook/addon-docs/blocks";
 import { within, userEvent, expect, fn } from "storybook/test";
 import { Provider } from "./Context/SimpleSharedCounterState";
 import { CustomSelector } from "./CustomSelector";
 import code from "./CustomSelector?raw";
+import stateCode from "./Context/SimpleSharedCounterState?raw";
 import { Callout } from "./utils/Callout";
 
 const meta: Meta<typeof CustomSelector> = {
@@ -13,6 +21,18 @@ const meta: Meta<typeof CustomSelector> = {
       source: {
         code,
       },
+      page: () => (
+        <>
+          <Title />
+          <Description />
+          <PrimaryBlock />
+          <Controls />
+          <h3>CustomSelector.tsx</h3>
+          <Source code={code} language="tsx" />
+          <h3>SimpleSharedCounterState.ts</h3>
+          <Source code={stateCode} language="tsx" />
+        </>
+      ),
     },
   },
   decorators: [
