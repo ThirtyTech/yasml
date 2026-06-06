@@ -16,14 +16,15 @@
   },
   "peerDependencies": {
     "@thirtytech/eslint-plugin-yasml": "*",
-    "eslint": "^8.2.0"
+    "eslint": "^9.0.0 || ^10.0.0"
+  },
+  "dependencies": {
+    "@typescript-eslint/parser": "^8.60.1"
   },
   "devDependencies": {
     "@thirtytech/eslint-plugin-yasml": "workspace:*",
-    "@types/eslint": "8",
-    "@typescript-eslint/parser": "^7.9.0",
-    "@typescript-eslint/utils": "^7.9.0",
     "@typescript/native-preview": "7.0.0-dev.20260604.1",
+    "eslint": "^10.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }

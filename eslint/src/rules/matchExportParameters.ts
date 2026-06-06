@@ -10,7 +10,6 @@ const rule = ESLintUtils.RuleCreator(
     hasSuggestions: true,
     docs: {
       description: "Match export parameters",
-      recommended: "recommended",
     },
     messages: {
       matchExportParameters: "Match export parameters",
@@ -66,7 +65,7 @@ const rule = ESLintUtils.RuleCreator(
         //    destructured into an object pattern whose property count differs
         //    from the current argument count. Everything else is a no-op, so
         //    bail out before doing any (expensive) type resolution.
-        const objectPattern = getObjectPattern(context);
+        const objectPattern = getObjectPattern(context, node);
         if (
           !objectPattern ||
           node.arguments.length === objectPattern.properties.length
@@ -159,11 +158,16 @@ function walkParentsForYasmlName(node: ts.Node): ts.FunctionExpression | null {
 }
 
 function getObjectPattern(
-  context: TSESLint.RuleContext<any, any>
+  context: TSESLint.RuleContext<any, any>,
+  node: TSESTree.Node
 ): TSESTree.ObjectPattern | undefined {
   // Walk ancestors from the innermost outward and stop at the nearest
   // VariableDeclarator. Iterating in reverse avoids allocating a reversed copy.
-  const ancestors = context.getAncestors();
+  //
+  // `context.getAncestors()` was removed in ESLint 9; the node-scoped
+  // `sourceCode.getAncestors(node)` is its replacement and exists on ESLint
+  // 8.38+/9/10, so this works across every ESLint we support.
+  const ancestors = context.sourceCode.getAncestors(node);
   for (let i = ancestors.length - 1; i >= 0; i--) {
     const ancestor = ancestors[i];
     if (ancestor.type === "VariableDeclarator") {

@@ -1,23 +1,33 @@
-import { Linter } from "eslint";
+import { Linter, type Rule } from "eslint";
 import { join } from "path";
 import * as parser from "@typescript-eslint/parser";
-import rule from "../../eslint/dist/rules/matchExportParameters";
+import rule from "../../eslint/dist/rules/matchExportParameters.js";
 const cwd = process.cwd();
 const projectPath = join(cwd, "../");
 const fileName = "src/CounterValue.tsx";
 
-const linter = new Linter({ cwd: projectPath, configType: "eslintrc" });
+// Flat config (ESLint 9+/10): rule, parser, and options are passed inline to
+// `verifyAndFix` — the eslintrc `defineRule`/`defineParser` Linter is gone in 10.
+const linter = new Linter({ cwd: projectPath, configType: "flat" });
 
-linter.defineRule(
-  "@thirtytech/yasml/match-export-parameters",
-  // @ts-ignore
-  rule
-);
-linter.defineParser(
-  "@typescript-eslint/parser",
-  // @ts-ignore
-  parser
-);
+const config: Linter.Config = {
+  // Flat config only lints a file matching some config's `files` key.
+  files: ["**/*.ts", "**/*.tsx"],
+  languageOptions: {
+    parser: parser as unknown as Linter.Parser,
+    parserOptions: {
+      tsconfigRootDir: projectPath,
+      project: join(projectPath, "tsconfig.json"),
+    },
+  },
+  plugins: {
+    "@thirtytech/yasml": {
+      rules: { "match-export-parameters": rule as unknown as Rule.RuleModule },
+    },
+  },
+  rules: { "@thirtytech/yasml/match-export-parameters": "warn" },
+};
+
 const result = linter.verifyAndFix(
   `import { useGlobalState } from "./state/MyState.state";
 
@@ -26,14 +36,7 @@ const result = linter.verifyAndFix(
     return <div>{counter}</div>;
   }
 `,
-  {
-    rules: { "@thirtytech/yasml/match-export-parameters": "warn" },
-    parser: "@typescript-eslint/parser",
-    parserOptions: {
-      tsconfigRootDir: projectPath,
-      project: join(projectPath, "tsconfig.json"),
-    },
-  },
+  config,
   { filename: fileName }
 );
 

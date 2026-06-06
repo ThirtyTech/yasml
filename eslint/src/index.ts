@@ -2,27 +2,35 @@ import matchExportParameters from "./rules/matchExportParameters.js";
 
 // Re-exported by name so consumers (e.g. the vite-plugin) can import the rule
 // directly off the package entry — `import { matchExportParameters }` — instead
-// of reaching into `dist/`. A named export also avoids the default-export interop
-// wrapping that esbuild applies when bundling, so it stays a plain typed module.
+// of reaching into `dist/`.
 export { matchExportParameters };
 
-// Exposed as named exports (not just default) so ESLint's eslintrc loader, which
-// `require()`s the plugin and reads `.rules`/`.configs` off the module namespace,
-// still finds them now that this package is ESM. The default export is kept for
-// flat-config / default-import consumers.
-export const rules = {
-  "match-export-parameters": matchExportParameters,
+// Flat-config plugin object. ESLint 10 removed the legacy eslintrc loader, so we
+// ship a single flat plugin: `meta` identifies it for caching/config-inspection,
+// `rules` holds the rule, and `configs.recommended` is a flat config block that
+// references this same plugin object under its `plugins` key (flat config wants
+// the instance, not the old `"@thirtytech/yasml"` string id).
+const plugin = {
+  meta: { name: "@thirtytech/eslint-plugin-yasml" },
+  rules: {
+    "match-export-parameters": matchExportParameters,
+  },
+  // Filled in below — see the self-reference note.
+  configs: {} as Record<string, unknown>,
 };
 
-export const configs = {
-  recommended: {
-    plugins: ["@thirtytech/yasml"],
-    parser: "@typescript-eslint/parser",
-    parserOptions: { sourceType: "module" },
-    rules: {
-      "@thirtytech/yasml/match-export-parameters": "warn",
-    },
+// Assigned after `plugin` exists because the preset must point `plugins` at the
+// plugin object itself. The rule needs type information, so consumers are
+// expected to have typed linting configured (e.g. typescript-eslint's
+// `recommendedTypeChecked`); the preset deliberately does not pin a parser so it
+// never clobbers the consumer's `languageOptions`.
+plugin.configs.recommended = {
+  name: "@thirtytech/yasml/recommended",
+  plugins: { "@thirtytech/yasml": plugin },
+  rules: {
+    "@thirtytech/yasml/match-export-parameters": "warn",
   },
 };
 
-export default { rules, configs };
+export const { rules, configs } = plugin;
+export default plugin;
