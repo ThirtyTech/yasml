@@ -4,6 +4,10 @@
 
 By enabling this rule you can ensure that your state is written in a way that will not cause unnecessary re-renders.
 
+> **Note:** You don't need this ESLint plugin if you use the Vite codegen plugin. The codegen
+> generates the `useSelector` arguments for you at build time, so there's nothing for the rule to
+> enforce. See [CodeGen with Vite](/codegen) for details.
+
 ## Installation
 
 ```bash copy
@@ -34,3 +38,9 @@ You'll add the `yasml` plugin to the list of utilized plugins and then apply the
 
 By convention ESLint plugins strip out the `eslint-plugin` from the package name. So don't be confused why the package is called
 `@thirtytech/eslint-plugin-yasml` but the rule is called `@thirtytech/yasml/match-export-parameters`.
+
+## Severity and auto-fix
+
+The rule is reported as a **warning** by default, so it won't fail your build or block a commit. It also
+ships a **code fix**, which means your editor can offer a quick auto-complete to rewrite the `useSelector`
+call with the correct arguments — or you can apply it across the project with `eslint --fix`.
