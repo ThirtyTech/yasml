@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write # required to create the release
+  models: read # required to call GitHub Models for AI release notes
 
 jobs:
   release:
@@ -16,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need full history + tags to build the changelog
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -47,6 +50,35 @@ jobs:
           done
           ls -l "$GITHUB_WORKSPACE/artifacts"
 
+      # Collect the commits between the previous tag and this one. If there's no
+      # prior tag (first release), fall back to the full history up to this tag.
+      - name: Collect commits since last tag
+        run: |
+          set -euo pipefail
+          PREV=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          echo "Previous tag: ${PREV:-<none>}"
+          RANGE="${GITHUB_REF_NAME}"
+          [ -n "$PREV" ] && RANGE="${PREV}..${GITHUB_REF_NAME}"
+          {
+            echo "Version: ${GITHUB_REF_NAME}"
+            echo
+            echo "Commits:"
+            git log "$RANGE" --pretty=format:'- %s (%h)'
+          } > commits.txt
+          cat commits.txt
+
+      - name: Generate AI release notes
+        id: notes
+        uses: actions/ai-inference@v1
+        with:
+          model: openai/gpt-4o
+          system-prompt: >
+            You write concise, user-facing release notes in Markdown.
+            Group changes under headings (Features, Fixes, Docs, Other).
+            Omit trivial chore/CI commits. Output only the notes, no preamble.
+          prompt-file: commits.txt
+          max-tokens: 1500
+
       - name: Create release and attach packages
         env:
           GH_TOKEN: ${{ github.token }}
@@ -54,4 +86,4 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             "$GITHUB_WORKSPACE"/artifacts/*.tgz \
             --title "$GITHUB_REF_NAME" \
-            --generate-notes
+            --notes-file "${{ steps.notes.outputs.response-file }}"
