@@ -120,6 +120,64 @@ function App() {
 }
 ```
 
+## Global Provider (`YasmlRoot`)
+
+Normally you wrap part of your tree in a state's `Provider` before its `useSelector` will work. That's great for scoped, isolated instances — but for state that's really a single app-wide singleton, placing (and remembering to place) a `Provider` is just boilerplate.
+
+`YasmlRoot` gives you an optional **global default**, similar to [Jotai's default store](https://jotai.org/docs/core/provider). Mount it once at the root of your app and every `yasml` factory can be used with **no `Provider` in the tree at all**. An explicit `Provider` still wins wherever you do add one.
+
+```jsx
+import yasml from "@thirtytech/yasml";
+
+const { YasmlRoot } = yasml;
+
+export default function App() {
+  return (
+    <YasmlRoot>
+      <MyComponent />
+    </YasmlRoot>
+  );
+}
+```
+
+Now any factory's `useSelector` works without its `Provider`:
+
+```jsx
+import { useState } from "react";
+import yasml from "@thirtytech/yasml";
+
+function CounterState() {
+  const [counter, setCounter] = useState(0);
+  return { counter, setCounter };
+}
+
+// No Provider required anywhere — YasmlRoot serves the default instance.
+export const { useSelector } = yasml(CounterState);
+
+function Counter() {
+  const { counter, setCounter } = useSelector("counter", "setCounter");
+  return <button onClick={() => setCounter((c) => c + 1)}>{counter}</button>;
+}
+```
+
+### An explicit Provider still wins
+
+The global default is only a fallback. Wherever you mount an explicit `Provider`, that instance takes over for its subtree — everything else keeps falling through to the global default. Use this when you need a second, independent copy of some state, or when you need to pass props into it.
+
+### Opting out per factory
+
+Some state is never meant to be a global singleton — for example a container with side-effecting hooks (sockets, polling, subscriptions) or one that *requires* props. Pass `{ global: false }` and that factory will **not** register a global default; an explicit `Provider` is then required, just as before.
+
+```jsx
+// Joins the global default (default behavior)
+export const Counter = yasml(CounterState);
+
+// Stays local-only — must be wrapped in <ChatProvider>
+export const Chat = yasml(ChatState, { global: false });
+```
+
+`YasmlRoot` does **not** nest your factories' providers around your app. Instead, each opted-in factory registers a tiny hidden **Host** that `YasmlRoot` renders as a **sibling** of your app. Each Host runs your state function once and publishes its values into a small per-key store; `useSelector` reads the nearest explicit `Provider` first and falls back to that store when there isn't one. Because the Hosts are siblings (not ancestors), a late-registering factory loading from a code-split chunk just mounts one more Host next to your app instead of remounting your tree — making the global default safe to use with `React.lazy` / dynamic imports.
+
 ## Installation
 
 npm:
